@@ -116,17 +116,19 @@ class _CreatePageState extends State<CreatePage> {
                     style: TextStyle(
                         color: Theme.of(context).colorScheme.error))
           else
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
+            DropdownButtonFormField<String>(
+              initialValue: _loader,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                hintText: 'Select a loader',
+              ),
+              items: [
                 for (final l in _loaders!)
-                  ChoiceChip(
-                    label: Text(l.label),
-                    selected: _loader == l.kind,
-                    onSelected: (_) => _pickLoader(l.kind),
-                  ),
+                  DropdownMenuItem(value: l.kind, child: Text(l.label)),
               ],
+              onChanged: (v) {
+                if (v != null) _pickLoader(v);
+              },
             ),
           const SizedBox(height: 24),
           Row(

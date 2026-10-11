@@ -43,7 +43,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Create'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Paper'));
+    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Paper').last);
     await tester.pumpAndSettle();
     await expectLater(find.byType(MaterialApp),
         matchesGoldenFile('goldens/create.png'));

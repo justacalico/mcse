@@ -33,8 +33,15 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> pickLoader(WidgetTester tester, String label) async {
+    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(label).last);
+    await tester.pumpAndSettle();
+  }
+
   Future<void> pickVersion(WidgetTester tester) async {
-    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.tap(find.byType(DropdownButtonFormField<String>).last);
     await tester.pumpAndSettle();
     await tester.tap(find.text('1.21.1').last);
     await tester.pumpAndSettle();
@@ -44,11 +51,9 @@ void main() {
     final backend = FakeBackend();
     await openCreate(tester, backend);
 
-    expect(find.text('Vanilla'), findsOneWidget);
-    expect(find.text('Paper'), findsOneWidget);
+    expect(find.text('Select a loader'), findsOneWidget);
 
-    await tester.tap(find.text('Paper'));
-    await tester.pumpAndSettle();
+    await pickLoader(tester, 'Paper');
     expect(backend.calls, contains('gameVersions:paper'));
 
     await pickVersion(tester);
@@ -64,10 +69,9 @@ void main() {
   testWidgets('snapshot toggle hides unstable versions', (tester) async {
     final backend = FakeBackend();
     await openCreate(tester, backend);
-    await tester.tap(find.text('Vanilla'));
-    await tester.pumpAndSettle();
+    await pickLoader(tester, 'Vanilla');
 
-    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.tap(find.byType(DropdownButtonFormField<String>).last);
     await tester.pumpAndSettle();
     expect(find.text('25w01a'), findsNothing);
     await tester.tap(find.text('1.21.1').last);
@@ -75,7 +79,7 @@ void main() {
 
     await tester.tap(find.text('Releases only'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.tap(find.byType(DropdownButtonFormField<String>).last);
     await tester.pumpAndSettle();
     expect(find.text('25w01a'), findsOneWidget);
   });
@@ -83,12 +87,11 @@ void main() {
   testWidgets('toggling releases clears a selected snapshot', (tester) async {
     final backend = FakeBackend();
     await openCreate(tester, backend);
-    await tester.tap(find.text('Vanilla'));
-    await tester.pumpAndSettle();
+    await pickLoader(tester, 'Vanilla');
 
     await tester.tap(find.text('Releases only'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.tap(find.byType(DropdownButtonFormField<String>).last);
     await tester.pumpAndSettle();
     await tester.tap(find.text('25w01a').last);
     await tester.pumpAndSettle();
@@ -101,8 +104,7 @@ void main() {
   testWidgets('empty name falls back to default', (tester) async {
     final backend = FakeBackend();
     await openCreate(tester, backend);
-    await tester.tap(find.text('Vanilla'));
-    await tester.pumpAndSettle();
+    await pickLoader(tester, 'Vanilla');
     await pickVersion(tester);
     await scrollTo(tester, find.widgetWithText(TextField, 'Server name'));
     await tester.enterText(
@@ -115,8 +117,7 @@ void main() {
   testWidgets('create failure shows error', (tester) async {
     final backend = FakeBackend();
     await openCreate(tester, backend);
-    await tester.tap(find.text('Paper'));
-    await tester.pumpAndSettle();
+    await pickLoader(tester, 'Paper');
     await pickVersion(tester);
     await acceptEula(tester);
     backend.error = Exception('disk full');
@@ -127,7 +128,9 @@ void main() {
   testWidgets('versions loading shows spinner', (tester) async {
     final backend = FakeBackend()..delay = const Duration(seconds: 1);
     await openCreate(tester, backend);
-    await tester.tap(find.text('Paper'));
+    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Paper').last);
     await tester.pump();
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
     await tester.pumpAndSettle();
@@ -138,8 +141,7 @@ void main() {
     final backend = FakeBackend()
       ..callErrors['gameVersions:paper'] = Exception('offline');
     await openCreate(tester, backend);
-    await tester.tap(find.text('Paper'));
-    await tester.pumpAndSettle();
+    await pickLoader(tester, 'Paper');
     await scrollTo(tester, find.textContaining('offline'));
     expect(find.textContaining('offline'), findsOneWidget);
   });
