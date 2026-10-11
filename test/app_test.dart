@@ -28,6 +28,34 @@ void main() {
     expect(find.text('mcse'), findsNWidgets(2));
   });
 
+  testWidgets('narrow width uses bottom navigation bar', (tester) async {
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    final backend = FakeBackend();
+    await tester.pumpWidget(testApp(backend));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.byType(NavigationRail), findsNothing);
+
+    await tester.tap(find.text('About'));
+    await tester.pumpAndSettle();
+    expect(find.text('mcse'), findsNWidgets(2));
+  });
+
+  testWidgets('wide width uses navigation rail', (tester) async {
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    final backend = FakeBackend();
+    await tester.pumpWidget(testApp(backend));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(NavigationRail), findsOneWidget);
+    expect(find.byType(NavigationBar), findsNothing);
+  });
+
   testWidgets('applies dark theme', (tester) async {
     final backend = FakeBackend();
     await tester.pumpWidget(testApp(backend));

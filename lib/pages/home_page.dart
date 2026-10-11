@@ -36,40 +36,72 @@ class _HomePageState extends State<HomePage> {
             .showSnackBar(SnackBar(content: Text(_shownError!)));
       });
     }
+    final narrow = MediaQuery.sizeOf(context).width < 600;
+    final body = IndexedStack(index: _index, children: pages);
     return Scaffold(
-      body: Row(
-        children: [
-          NavigationRail(
-            selectedIndex: _index,
-            onDestinationSelected: (i) => setState(() => _index = i),
-            labelType: NavigationRailLabelType.all,
-            destinations: const [
-              NavigationRailDestination(
-                icon: Icon(Icons.dns_outlined),
-                selectedIcon: Icon(Icons.dns),
-                label: Text('Servers'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.add_box_outlined),
-                selectedIcon: Icon(Icons.add_box),
-                label: Text('Create'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.settings_outlined),
-                selectedIcon: Icon(Icons.settings),
-                label: Text('Settings'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.info_outline),
-                selectedIcon: Icon(Icons.info),
-                label: Text('About'),
-              ),
-            ],
-          ),
-          const VerticalDivider(width: 1),
-          Expanded(child: IndexedStack(index: _index, children: pages)),
-        ],
-      ),
+      body: narrow
+          ? body
+          : Row(
+              children: [
+                NavigationRail(
+                  selectedIndex: _index,
+                  onDestinationSelected: (i) => setState(() => _index = i),
+                  labelType: NavigationRailLabelType.all,
+                  destinations: const [
+                    NavigationRailDestination(
+                      icon: Icon(Icons.dns_outlined),
+                      selectedIcon: Icon(Icons.dns),
+                      label: Text('Servers'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.add_box_outlined),
+                      selectedIcon: Icon(Icons.add_box),
+                      label: Text('Create'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.settings_outlined),
+                      selectedIcon: Icon(Icons.settings),
+                      label: Text('Settings'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.info_outline),
+                      selectedIcon: Icon(Icons.info),
+                      label: Text('About'),
+                    ),
+                  ],
+                ),
+                const VerticalDivider(width: 1),
+                Expanded(child: body),
+              ],
+            ),
+      bottomNavigationBar: narrow
+          ? NavigationBar(
+              selectedIndex: _index,
+              onDestinationSelected: (i) => setState(() => _index = i),
+              destinations: const [
+                NavigationDestination(
+                  icon: Icon(Icons.dns_outlined),
+                  selectedIcon: Icon(Icons.dns),
+                  label: 'Servers',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.add_box_outlined),
+                  selectedIcon: Icon(Icons.add_box),
+                  label: 'Create',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.settings_outlined),
+                  selectedIcon: Icon(Icons.settings),
+                  label: 'Settings',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.info_outline),
+                  selectedIcon: Icon(Icons.info),
+                  label: 'About',
+                ),
+              ],
+            )
+          : null,
     );
   }
 }
