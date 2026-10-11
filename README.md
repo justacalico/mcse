@@ -5,9 +5,9 @@ A desktop **Minecraft Java Edition server manager**. Create and run Vanilla, Pap
 [![pipeline](https://gitlab.com/HttpAnimations/mcse/badges/main/pipeline.svg)](https://gitlab.com/HttpAnimations/mcse/-/pipelines)
 [![release](https://gitlab.com/HttpAnimations/mcse/-/badges/release.svg)](https://gitlab.com/HttpAnimations/mcse/-/releases)
 [![license: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](https://gitlab.com/HttpAnimations/mcse/-/blob/main/LICENSE)
-[![pages](https://img.shields.io/badge/landing-httpanimations.gitlab.io%2Fmcse-54B049)](https://httpanimations.gitlab.io/mcse/)
+[![pages](https://img.shields.io/badge/landing-mcse--0c8aa9.gitlab.io-54B049)](https://mcse-0c8aa9.gitlab.io/)
 
-**Landing page:** <https://httpanimations.gitlab.io/mcse/>
+**Landing page:** <https://mcse-0c8aa9.gitlab.io/>
 **Downloads:** <https://gitlab.com/HttpAnimations/mcse/-/releases> · <https://github.com/justacalico/mcse/releases>
 
 ## Features
