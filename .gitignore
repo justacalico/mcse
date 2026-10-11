@@ -1,0 +1,32 @@
+# Dart/Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+coverage/
+.packages
+pubspec.lock? 
+# keep pubspec.lock? apps should commit it -> do NOT ignore
+.idea/
+*.iml
+.metadata
+
+# Rust
+rust/target/
+target/
+**/target/
+
+# Signing — never commit
+*.jks
+key.properties
+android/key.properties
+android/app/*.jks
+android/app/upload-keystore.jks
+
+# Data
+data/
+
+# OS
+.DS_Store
+Thumbs.db

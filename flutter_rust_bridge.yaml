@@ -1,0 +1,5 @@
+rust_input: crate::api
+rust_root: rust/frb
+dart_output: packages/mcse_bridge/lib/src/rust
+dart_entrypoint_class_name: McseBridge
+web: false

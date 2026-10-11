@@ -1,0 +1,15 @@
+name: mcse_bridge
+description: "Generated flutter_rust_bridge bindings for the mcse backend."
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+  flutter: '>=3.3.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_rust_bridge: 2.13.0
+
+flutter: {}
