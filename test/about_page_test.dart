@@ -18,7 +18,7 @@ void main() {
 
   testWidgets('shows version and links', (tester) async {
     await openAbout(tester, FakeBackend());
-    expect(find.text('mcse'), findsOneWidget);
+    expect(find.text('mcse'), findsNWidgets(2));
     expect(find.text('1.0.0'), findsOneWidget);
     expect(find.text('Check for updates'), findsOneWidget);
     expect(find.text('Releases'), findsOneWidget);

@@ -8,6 +8,7 @@ import 'state/app_state.dart';
 import 'state/theme_state.dart';
 import 'state/update_state.dart';
 import 'theme.dart';
+import 'widgets/top_bar.dart';
 
 Widget buildApp({
   required Backend backend,
@@ -39,6 +40,9 @@ class McseApp extends StatelessWidget {
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: theme.mode,
+      builder: (context, child) => Column(
+        children: [const WindowTopBar(), Expanded(child: child!)],
+      ),
       home: const HomePage(),
     );
   }

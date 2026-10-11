@@ -25,7 +25,7 @@ void main() {
 
     await tester.tap(find.text('About'));
     await tester.pumpAndSettle();
-    expect(find.text('mcse'), findsOneWidget);
+    expect(find.text('mcse'), findsNWidgets(2));
   });
 
   testWidgets('applies dark theme', (tester) async {
