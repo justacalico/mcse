@@ -52,6 +52,7 @@ impl LoaderProvider for Fabric {
             filename: format!("fabric-server-{game_version}-{loader}.jar"),
             sha1: None,
             sha256: None,
+            md5: None,
         })
     }
 }

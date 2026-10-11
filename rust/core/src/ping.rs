@@ -125,6 +125,9 @@ async fn read_varint(sock: &mut TcpStream) -> Result<i32> {
 
 async fn read_string(sock: &mut TcpStream) -> Result<String> {
     let len = read_varint(sock).await? as usize;
+    if len > 4 * 1024 * 1024 {
+        return Err(Error::Msg("oversized status response".into()));
+    }
     let mut buf = vec![0u8; len];
     sock.read_exact(&mut buf).await?;
     Ok(String::from_utf8_lossy(&buf).to_string())

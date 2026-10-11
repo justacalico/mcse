@@ -96,10 +96,12 @@ class ServerDetailPage extends StatelessWidget {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              Navigator.of(context).pop();
-              app.delete(server.id);
+              try {
+                await app.delete(server.id);
+                if (context.mounted) Navigator.of(context).pop();
+              } catch (_) {}
             },
             child: const Text('Delete'),
           ),
@@ -122,10 +124,17 @@ class ConsoleTab extends StatefulWidget {
 class _ConsoleTabState extends State<ConsoleTab> {
   final _command = TextEditingController();
   final _scroll = ScrollController();
+  bool _atBottom = true;
 
   @override
   void initState() {
     super.initState();
+    _scroll.addListener(() {
+      if (_scroll.hasClients) {
+        _atBottom = _scroll.position.pixels >=
+            _scroll.position.maxScrollExtent - 24;
+      }
+    });
     context.read<AppState>().loadRecentLog(widget.serverId);
   }
 
@@ -147,7 +156,7 @@ class _ConsoleTabState extends State<ConsoleTab> {
   Widget build(BuildContext context) {
     final lines = context.watch<AppState>().logOf(widget.serverId);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scroll.hasClients) {
+      if (_atBottom && _scroll.hasClients) {
         _scroll.jumpTo(_scroll.position.maxScrollExtent);
       }
     });
@@ -518,6 +527,19 @@ class _ServerSettingsTabState extends State<ServerSettingsTab> {
   }
 
   @override
+  void didUpdateWidget(covariant ServerSettingsTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.server != widget.server) {
+      final s = widget.server;
+      _name.text = s.name;
+      _minRam.text = '${s.minRamMb}';
+      _maxRam.text = '${s.maxRamMb}';
+      _jvmArgs.text = s.jvmArgs.join(' ');
+      _javaPath = s.javaPath;
+    }
+  }
+
+  @override
   void dispose() {
     _name.dispose();
     _minRam.dispose();
@@ -618,6 +640,13 @@ class _ServerSettingsTabState extends State<ServerSettingsTab> {
               value: null,
               child: Text('Auto (best match)'),
             ),
+            if (_javaPath != null &&
+                (_runtimes ?? const []).every((r) => r.path != _javaPath))
+              DropdownMenuItem<String?>(
+                value: _javaPath,
+                child: Text(_javaPath!,
+                    overflow: TextOverflow.ellipsis),
+              ),
             if (_runtimes != null)
               for (final rt in _runtimes!)
                 DropdownMenuItem<String?>(

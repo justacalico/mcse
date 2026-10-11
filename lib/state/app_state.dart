@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../backend/backend.dart';
 
 const _logCap = 2000;
+const _installCap = 200;
 
 /// Download progress for an in-flight instance creation.
 class CreateProgress {
@@ -47,7 +48,11 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> refresh() async {
-    instances = await backend.instances();
+    try {
+      instances = await backend.instances();
+    } catch (e) {
+      lastError = e.toString();
+    }
     for (final id in creating.keys.toList()) {
       // Instances that finished while events were being processed.
       if (instances.any((i) => i.id == id)) creating.remove(id);
@@ -72,19 +77,24 @@ class AppState extends ChangeNotifier {
         notifyListeners();
       case EventKind.download:
         if (e.id == null) return;
+        final prev = creating[e.id!];
+        if (prev != null && prev.failed) return;
         creating[e.id!] = CreateProgress(
           received: e.received ?? 0,
           total: e.total,
-          installLines: creating[e.id!]?.installLines ?? const [],
+          installLines: prev?.installLines ?? const [],
         );
         notifyListeners();
       case EventKind.install:
         if (e.id == null || e.line == null) return;
         final prev = creating[e.id!];
+        final lines = [...?prev?.installLines, e.line!];
         creating[e.id!] = CreateProgress(
           received: prev?.received ?? 0,
           total: prev?.total,
-          installLines: [...?prev?.installLines, e.line!],
+          installLines: lines.length > _installCap
+              ? lines.sublist(lines.length - _installCap)
+              : lines,
         );
         notifyListeners();
       case EventKind.created:
@@ -93,7 +103,7 @@ class AppState extends ChangeNotifier {
       case EventKind.backup:
         notifyListeners();
       case EventKind.error:
-        if (e.id != null) {
+        if (e.id != null && creating.containsKey(e.id)) {
           creating[e.id!] = CreateProgress(
             failed: true,
             error: e.message ?? 'unknown error',
@@ -108,7 +118,16 @@ class AppState extends ChangeNotifier {
 
   Future<void> loadRecentLog(String id) async {
     try {
-      logs[id] = List.of(await backend.recentLog(id));
+      final fetched = await backend.recentLog(id);
+      final existing = logs[id] ?? const <String>[];
+      if (existing.isEmpty) {
+        logs[id] = List.of(fetched);
+      } else {
+        // Keep lines that streamed in while the snapshot was in flight:
+        // they follow the last fetched line in the existing list.
+        final anchor = fetched.isEmpty ? -1 : existing.lastIndexOf(fetched.last);
+        logs[id] = [...fetched, ...existing.sublist(anchor < 0 ? 0 : anchor + 1)];
+      }
     } catch (e) {
       lastError = e.toString();
     }

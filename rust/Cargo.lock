@@ -1185,6 +1185,7 @@ dependencies = [
  "dirs",
  "flate2",
  "futures",
+ "md-5",
  "reqwest",
  "serde",
  "serde_json",
@@ -1202,7 +1203,7 @@ dependencies = [
 
 [[package]]
 name = "mcse_frb"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "flutter_rust_bridge",

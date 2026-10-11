@@ -115,15 +115,16 @@ class FrbBackend implements Backend {
     int? maxRamMb,
     List<String>? jvmArgs,
     String? javaPath,
-  }) =>
-      frb.updateInstance(
-        id: id,
-        name: name,
-        minRamMb: minRamMb,
-        maxRamMb: maxRamMb,
-        jvmArgs: jvmArgs,
-        javaPath: javaPath,
-      );
+  }) async {
+    await frb.updateInstance(
+      id: id,
+      name: name,
+      minRamMb: minRamMb,
+      maxRamMb: maxRamMb,
+      jvmArgs: jvmArgs,
+    );
+    await frb.setJava(id: id, path: javaPath);
+  }
 
   @override
   Future<Map<String, String>> properties(String id) =>

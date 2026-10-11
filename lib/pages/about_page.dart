@@ -22,6 +22,8 @@ class _AboutPageState extends State<AboutPage> {
     super.initState();
     context.read<UpdateState>().currentVersion().then((v) {
       if (mounted) setState(() => _version = v);
+    }).catchError((_) {
+      if (mounted) setState(() => _version = '?');
     });
   }
 

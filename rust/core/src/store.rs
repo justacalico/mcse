@@ -1,29 +1,35 @@
 use crate::models::Instance;
 use crate::{paths, Result};
 use std::collections::HashMap;
+use std::path::PathBuf;
 use uuid::Uuid;
 
-/// Persistent registry of all instances, stored as JSON in the data dir.
-#[derive(Debug, Default)]
+/// Persistent registry of all instances, stored as JSON under the data dir.
+#[derive(Debug)]
 pub struct Store {
     pub instances: HashMap<Uuid, Instance>,
+    root: PathBuf,
 }
 
 impl Store {
-    pub fn load() -> Result<Store> {
-        let file = paths::registry_file();
+    pub fn load(root: &std::path::Path) -> Result<Store> {
+        let file = paths::registry_file(root);
         if !file.exists() {
-            return Ok(Store::default());
+            return Ok(Store {
+                instances: HashMap::new(),
+                root: root.to_path_buf(),
+            });
         }
         let raw = std::fs::read_to_string(&file)?;
         let instances: Vec<Instance> = serde_json::from_str(&raw)?;
         Ok(Store {
             instances: instances.into_iter().map(|i| (i.id, i)).collect(),
+            root: root.to_path_buf(),
         })
     }
 
     pub fn save(&self) -> Result<()> {
-        let file = paths::registry_file();
+        let file = paths::registry_file(&self.root);
         if let Some(parent) = file.parent() {
             std::fs::create_dir_all(parent)?;
         }
@@ -36,16 +42,27 @@ impl Store {
     }
 
     pub fn insert(&mut self, instance: Instance) -> Result<()> {
-        self.instances.insert(instance.id, instance);
-        self.save()
+        let id = instance.id;
+        let prev = self.instances.insert(id, instance);
+        if let Err(e) = self.save() {
+            match prev {
+                Some(p) => self.instances.insert(id, p),
+                None => self.instances.remove(&id),
+            };
+            return Err(e);
+        }
+        Ok(())
     }
 
-    pub fn remove(&mut self, id: Uuid) -> Option<Instance> {
+    pub fn remove(&mut self, id: Uuid) -> Result<Option<Instance>> {
         let removed = self.instances.remove(&id);
-        if removed.is_some() {
-            let _ = self.save();
+        if let Some(inst) = &removed {
+            if let Err(e) = self.save() {
+                self.instances.insert(id, inst.clone());
+                return Err(e);
+            }
         }
-        removed
+        Ok(removed)
     }
 }
 
@@ -74,17 +91,14 @@ mod tests {
     }
 
     #[test]
-    #[serial_test::serial]
     fn roundtrip() {
         let dir = tempfile::tempdir().unwrap();
-        std::env::set_var("MCSE_DATA_DIR", dir.path());
-        let mut store = Store::load().unwrap();
+        let mut store = Store::load(dir.path()).unwrap();
         let i = inst("a");
         store.insert(i.clone()).unwrap();
-        let mut loaded = Store::load().unwrap();
+        let mut loaded = Store::load(dir.path()).unwrap();
         assert_eq!(loaded.instances[&i.id].name, "a");
-        assert!(loaded.remove(i.id).is_some());
-        assert!(Store::load().unwrap().instances.is_empty());
-        std::env::remove_var("MCSE_DATA_DIR");
+        assert!(loaded.remove(i.id).unwrap().is_some());
+        assert!(Store::load(dir.path()).unwrap().instances.is_empty());
     }
 }

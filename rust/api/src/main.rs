@@ -19,6 +19,11 @@ struct Args {
     /// Static files to serve at / (a future web UI).
     #[arg(long)]
     web_dir: Option<PathBuf>,
+    /// Allow any origin for browser clients. Off by default: with no auth
+    /// on the API, permissive CORS would let any visited web page issue
+    /// calls against this server.
+    #[arg(long)]
+    cors: bool,
 }
 
 #[tokio::main]
@@ -33,6 +38,6 @@ async fn main() -> std::io::Result<()> {
     let manager = Manager::new(data_dir).map_err(|e| std::io::Error::other(e.to_string()))?;
     let addr: SocketAddr = format!("{}:{}", args.host, args.port)
         .parse()
-        .expect("invalid listen address");
-    mcse_api::serve(manager, addr, args.web_dir).await
+        .map_err(|e| std::io::Error::other(format!("invalid listen address: {e}")))?;
+    mcse_api::serve(manager, addr, args.web_dir, args.cors).await
 }

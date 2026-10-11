@@ -126,6 +126,7 @@ ServerInstance testServer({
   String id = 'srv-1',
   String name = 'Test Server',
   ServerStatus status = ServerStatus.stopped,
+  String? javaPath,
 }) =>
     ServerInstance(
       id: id,
@@ -134,6 +135,7 @@ ServerInstance testServer({
       gameVersion: '1.21.1',
       dir: '/data/mcse/instances/$id',
       jar: 'paper.jar',
+      javaPath: javaPath,
       minRamMb: 1024,
       maxRamMb: 4096,
       jvmArgs: const [],

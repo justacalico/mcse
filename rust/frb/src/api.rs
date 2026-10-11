@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::runtime::Runtime;
+use tokio::sync::broadcast;
 use uuid::Uuid;
 
 static RT: OnceCell<Runtime> = OnceCell::new();
@@ -190,8 +191,14 @@ pub fn backend_data_dir() -> String {
 pub fn subscribe_events(sink: StreamSink<EventDto>) {
     let mut rx = mgr().subscribe();
     rt().spawn(async move {
-        while let Ok(event) = rx.recv().await {
-            let _ = sink.add(event_dto(&event));
+        loop {
+            match rx.recv().await {
+                Ok(event) => {
+                    let _ = sink.add(event_dto(&event));
+                }
+                Err(broadcast::error::RecvError::Lagged(_)) => continue,
+                Err(broadcast::error::RecvError::Closed) => break,
+            }
         }
     });
 }
@@ -319,7 +326,6 @@ pub fn update_instance(
     min_ram_mb: Option<u32>,
     max_ram_mb: Option<u32>,
     jvm_args: Option<Vec<String>>,
-    java_path: Option<String>,
 ) -> Result<(), anyhow::Error> {
     Ok(rt().block_on(mgr().update_instance(
         parse_id(&id)?,
@@ -328,9 +334,15 @@ pub fn update_instance(
             min_ram_mb,
             max_ram_mb,
             jvm_args,
-            java_path: Some(java_path),
+            java_path: None,
         },
     ))?)
+}
+
+/// Tri-state java selection: `Some(path)` pins a runtime, `None` clears it
+/// back to auto-detect.
+pub fn set_java(id: String, path: Option<String>) -> Result<(), anyhow::Error> {
+    Ok(rt().block_on(mgr().set_java(parse_id(&id)?, path))?)
 }
 
 // ---------- properties ----------
@@ -384,7 +396,7 @@ pub fn restore_backup(id: String, name: String) -> Result<(), anyhow::Error> {
 // ---------- java ----------
 
 pub fn java_runtimes() -> Vec<JavaRuntimeDto> {
-    rt().block_on(java::detect_runtimes())
+    rt().block_on(mgr().runtimes())
         .into_iter()
         .map(|r| JavaRuntimeDto {
             path: r.path.to_string_lossy().to_string(),

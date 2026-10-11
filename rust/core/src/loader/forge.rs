@@ -101,6 +101,9 @@ impl LoaderProvider for Forge {
             pairs.reverse();
             Ok(pairs
                 .into_iter()
+                // Forge <1.9 uses a different maven artifact layout
+                // (`-<mc>` suffix); the plain form 404s for those.
+                .filter(|(id, _)| version_tuple(id).is_some_and(|t| t >= (1, 9, 0)))
                 .map(|(id, _)| GameVersion { id, stable: true })
                 .collect())
         }

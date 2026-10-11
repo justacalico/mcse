@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../state/app_state.dart';
 import 'about_page.dart';
 import 'create_page.dart';
 import 'servers_page.dart';
@@ -15,6 +17,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _index = 0;
+  String? _shownError;
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +27,15 @@ class _HomePageState extends State<HomePage> {
       SettingsPage(),
       AboutPage(),
     ];
+    final lastError = context.watch<AppState>().lastError;
+    if (lastError != null && lastError != _shownError) {
+      _shownError = lastError;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(_shownError!)));
+      });
+    }
     return Scaffold(
       body: Row(
         children: [
@@ -55,7 +67,7 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           const VerticalDivider(width: 1),
-          Expanded(child: pages[_index]),
+          Expanded(child: IndexedStack(index: _index, children: pages)),
         ],
       ),
     );

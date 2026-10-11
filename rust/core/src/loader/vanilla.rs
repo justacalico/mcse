@@ -76,6 +76,7 @@ impl LoaderProvider for Vanilla {
             filename: format!("minecraft-server-{game_version}.jar"),
             sha1: Some(server.sha1),
             sha256: None,
+            md5: None,
         })
     }
 }

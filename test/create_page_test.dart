@@ -80,6 +80,24 @@ void main() {
     expect(find.text('25w01a'), findsOneWidget);
   });
 
+  testWidgets('toggling releases clears a selected snapshot', (tester) async {
+    final backend = FakeBackend();
+    await openCreate(tester, backend);
+    await tester.tap(find.text('Vanilla'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Releases only'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('25w01a').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Releases only'));
+    await tester.pumpAndSettle();
+    expect(find.text('Select a game version'), findsOneWidget);
+  });
+
   testWidgets('empty name falls back to default', (tester) async {
     final backend = FakeBackend();
     await openCreate(tester, backend);

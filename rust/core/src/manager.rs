@@ -38,19 +38,21 @@ pub struct Manager {
 impl Manager {
     pub fn new(data_dir: PathBuf) -> Result<Arc<Manager>> {
         std::fs::create_dir_all(&data_dir)?;
-        std::fs::create_dir_all(paths::instances_dir())?;
-        std::fs::create_dir_all(paths::backups_dir())?;
-        std::fs::create_dir_all(paths::runtimes_dir())?;
-        std::fs::create_dir_all(paths::downloads_dir())?;
+        std::fs::create_dir_all(paths::instances_dir(&data_dir))?;
+        std::fs::create_dir_all(paths::backups_dir(&data_dir))?;
+        std::fs::create_dir_all(paths::runtimes_dir(&data_dir))?;
+        std::fs::create_dir_all(paths::downloads_dir(&data_dir))?;
         let (events, _) = broadcast::channel(2048);
         Ok(Arc::new(Manager {
-            data_dir,
-            store: RwLock::new(Store::load()?),
+            store: RwLock::new(Store::load(&data_dir)?),
             running: RwLock::new(HashMap::new()),
             events,
             http: reqwest::Client::builder()
                 .user_agent(concat!("mcse/", env!("CARGO_PKG_VERSION")))
+                .connect_timeout(Duration::from_secs(15))
+                .read_timeout(Duration::from_secs(120))
                 .build()?,
+            data_dir,
         }))
     }
 
@@ -130,38 +132,53 @@ impl Manager {
             ));
         }
         let id = req.id;
-        let dir = paths::instances_dir().join(id.to_string());
+        let dir = paths::instances_dir(&self.data_dir).join(id.to_string());
         tokio::fs::create_dir_all(&dir).await?;
+        match self.create_in_dir(id, &dir, req).await {
+            Ok(()) => Ok(id),
+            Err(e) => {
+                let _ = tokio::fs::remove_dir_all(&dir).await;
+                Err(e)
+            }
+        }
+    }
 
+    async fn create_in_dir(
+        self: &Arc<Self>,
+        id: Uuid,
+        dir: &std::path::Path,
+        req: CreateRequest,
+    ) -> Result<()> {
         let provider = loader::provider(req.loader);
         let artifact = provider.resolve(&self.http, &req.game_version).await?;
-        let (url, filename, sha1, sha256, installer) = match artifact {
+        let (url, filename, sha1, sha256, md5, installer) = match artifact {
             ServerArtifact::Jar {
                 url,
                 filename,
                 sha1,
                 sha256,
-            } => (url, filename, sha1, sha256, None),
+                md5,
+            } => (url, filename, sha1, sha256, md5, None),
             ServerArtifact::Installer {
                 url,
                 filename,
                 sha1,
                 args,
-            } => (url, filename, sha1, None, Some(args)),
+            } => (url, filename, sha1, None, None, Some(args)),
         };
 
         let jar_path = dir.join(&filename);
         let events = self.events.clone();
-        let progress_id = id;
         crate::download::download(
             &self.http,
             &url,
             &jar_path,
             sha1.as_deref(),
             sha256.as_deref(),
+            md5.as_deref(),
             move |received, total| {
                 let _ = events.send(Event::DownloadProgress {
-                    id: progress_id,
+                    id,
                     received,
                     total,
                 });
@@ -171,9 +188,9 @@ impl Manager {
 
         let mut jar = Some(filename.clone());
         if let Some(args) = installer {
-            self.run_installer(id, &dir, &jar_path, &args).await?;
+            self.run_installer(id, dir, &jar_path, &args).await?;
             let _ = tokio::fs::remove_file(&jar_path).await;
-            jar = process::find_server_jar(&dir);
+            jar = process::find_server_jar(dir);
         }
 
         tokio::fs::write(dir.join("eula.txt"), "eula=true\n").await?;
@@ -185,7 +202,7 @@ impl Manager {
             loader: req.loader,
             game_version: req.game_version.clone(),
             loader_version: None,
-            dir,
+            dir: dir.to_path_buf(),
             jar,
             java_path: None,
             min_ram_mb: req.min_ram_mb,
@@ -195,7 +212,7 @@ impl Manager {
         };
         self.store.write().await.insert(instance)?;
         let _ = self.events.send(Event::InstanceCreated { id });
-        Ok(id)
+        Ok(())
     }
 
     async fn run_installer(
@@ -205,7 +222,7 @@ impl Manager {
         jar: &std::path::Path,
         args: &[String],
     ) -> Result<()> {
-        let runtimes = java::detect_runtimes().await;
+        let runtimes = java::detect_runtimes(&self.data_dir).await;
         let java = java::pick_runtime(&runtimes, 8)
             .or_else(|| runtimes.first())
             .ok_or(Error::NoJava {
@@ -220,11 +237,16 @@ impl Manager {
         cmd.stderr(std::process::Stdio::piped());
         let mut child = cmd.spawn()?;
         let events = self.events.clone();
-        if let Some(out) = child.stdout.take() {
+        use tokio::io::AsyncRead;
+        let pipes: Vec<Option<Box<dyn AsyncRead + Send + Unpin>>> = vec![
+            child.stdout.take().map(|o| Box::new(o) as _),
+            child.stderr.take().map(|o| Box::new(o) as _),
+        ];
+        for pipe in pipes.into_iter().flatten() {
             let events = events.clone();
             tokio::spawn(async move {
                 use tokio::io::{AsyncBufReadExt, BufReader};
-                let mut lines = BufReader::new(out).lines();
+                let mut lines = BufReader::new(pipe).lines();
                 while let Ok(Some(line)) = lines.next_line().await {
                     let _ = events.send(Event::InstallProgress { id, line });
                 }
@@ -239,15 +261,19 @@ impl Manager {
 
     pub async fn delete_instance(&self, id: Uuid, remove_files: bool) -> Result<()> {
         self.stop_internal(id, true).await;
+        self.running.write().await.remove(&id);
         let inst = self
             .store
             .write()
             .await
-            .remove(id)
+            .remove(id)?
             .ok_or(Error::InstanceNotFound(id))?;
         if remove_files {
-            let _ = tokio::fs::remove_dir_all(&inst.dir).await;
-            let backup_dir = paths::backups_dir().join(id.to_string());
+            let instances_root = paths::instances_dir(&self.data_dir);
+            if inst.dir.starts_with(&instances_root) {
+                let _ = tokio::fs::remove_dir_all(&inst.dir).await;
+            }
+            let backup_dir = paths::backups_dir(&self.data_dir).join(id.to_string());
             let _ = tokio::fs::remove_dir_all(&backup_dir).await;
         }
         Ok(())
@@ -258,7 +284,7 @@ impl Manager {
         let java_path = match &inst.java_path {
             Some(p) => PathBuf::from(p),
             None => {
-                let runtimes = java::detect_runtimes().await;
+                let runtimes = java::detect_runtimes(&self.data_dir).await;
                 java::pick_runtime(&runtimes, required)
                     .ok_or_else(|| Error::NoJava {
                         required,
@@ -281,16 +307,22 @@ impl Manager {
 
     pub async fn start(self: &Arc<Self>, id: Uuid) -> Result<()> {
         let inst = self.instance(id).await?;
-        if self.running.read().await.contains_key(&id) {
-            return Err(Error::AlreadyRunning(id));
-        }
         let spec = self.launch_spec(&inst).await?;
-        let handle = process::spawn(spec, id, self.events.clone()).await?;
-        self.running.write().await.insert(id, handle);
+        let mut running = self.running.write().await;
+        if let Some(h) = running.get(&id) {
+            let s = h.status().await;
+            if s == InstanceStatus::Stopped || s == InstanceStatus::Crashed {
+                running.remove(&id);
+            } else {
+                return Err(Error::AlreadyRunning(id));
+            }
+        }
         let _ = self.events.send(Event::StatusChanged {
             id,
             status: InstanceStatus::Starting,
         });
+        let handle = process::spawn(spec, id, self.events.clone()).await?;
+        running.insert(id, handle);
         Ok(())
     }
 
@@ -384,12 +416,23 @@ impl Manager {
 
     pub async fn list_backups(&self, id: Uuid) -> Result<Vec<BackupMeta>> {
         let inst = self.instance(id).await?;
-        backup::list(&inst).await
+        backup::list(&self.data_dir, &inst).await
     }
 
     pub async fn create_backup(&self, id: Uuid) -> Result<BackupMeta> {
         let inst = self.instance(id).await?;
-        let meta = backup::create(&inst).await?;
+        let running = self.running.read().await.get(&id).cloned();
+        let meta = if let Some(h) = running {
+            // Flush world data before zipping a live server.
+            let _ = h.send_command("save-off").await;
+            let _ = h.send_command("save-all").await;
+            tokio::time::sleep(Duration::from_secs(2)).await;
+            let meta = backup::create(&self.data_dir, &inst).await;
+            let _ = h.send_command("save-on").await;
+            meta?
+        } else {
+            backup::create(&self.data_dir, &inst).await?
+        };
         let _ = self.events.send(Event::BackupCreated {
             id,
             name: meta.name.clone(),
@@ -399,7 +442,7 @@ impl Manager {
 
     pub async fn delete_backup(&self, id: Uuid, name: &str) -> Result<()> {
         let inst = self.instance(id).await?;
-        backup::remove(&inst, name).await
+        backup::remove(&self.data_dir, &inst, name).await
     }
 
     pub async fn restore_backup(self: &Arc<Self>, id: Uuid, name: &str) -> Result<()> {
@@ -408,7 +451,7 @@ impl Manager {
             self.stop_internal(id, true).await;
             self.reap(id).await;
         }
-        backup::restore(&inst, name).await
+        backup::restore(&self.data_dir, &inst, name).await
     }
 
     /// Server-list ping to 127.0.0.1 on the configured port.
@@ -420,11 +463,11 @@ impl Manager {
     }
 
     pub async fn runtimes(&self) -> Vec<JavaRuntime> {
-        java::detect_runtimes().await
+        java::detect_runtimes(&self.data_dir).await
     }
 
     pub async fn install_java(&self, feature: u32) -> Result<JavaRuntime> {
-        java::install_temurin(&self.http, feature, |line| {
+        java::install_temurin(&self.http, &self.data_dir, feature, |line| {
             tracing::info!(line);
         })
         .await
@@ -447,14 +490,20 @@ impl Manager {
             .get_mut(&id)
             .ok_or(Error::InstanceNotFound(id))?;
         if let Some(name) = patch.name {
+            if name.trim().is_empty() {
+                return Err(Error::InvalidInput("name must not be empty".into()));
+            }
             inst.name = name;
         }
-        if let Some(min) = patch.min_ram_mb {
-            inst.min_ram_mb = min;
+        let min = patch.min_ram_mb.unwrap_or(inst.min_ram_mb);
+        let max = patch.max_ram_mb.unwrap_or(inst.max_ram_mb);
+        if min == 0 || min > max {
+            return Err(Error::InvalidInput(format!(
+                "ram must satisfy 0 < min ({min}) <= max ({max})"
+            )));
         }
-        if let Some(max) = patch.max_ram_mb {
-            inst.max_ram_mb = max;
-        }
+        inst.min_ram_mb = min;
+        inst.max_ram_mb = max;
         if let Some(args) = patch.jvm_args {
             inst.jvm_args = args;
         }

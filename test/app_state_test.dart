@@ -118,6 +118,62 @@ void main() {
     expect(state.logOf('srv-1'), isEmpty);
   });
 
+  test('loadRecentLog merges lines streamed during the fetch', () async {
+    backend.emit(const BackendEvent(EventKind.log,
+        id: 'srv-1', line: 'live-1'));
+    backend.emit(const BackendEvent(EventKind.log,
+        id: 'srv-1', line: 'live-2'));
+    await pumpEventQueue();
+    backend.logResult = ['snap-1', 'live-1'];
+    await state.loadRecentLog('srv-1');
+    expect(state.logOf('srv-1'), ['snap-1', 'live-1', 'live-2']);
+
+    backend.logResult = ['snap-2'];
+    await state.loadRecentLog('srv-1');
+    expect(state.logOf('srv-1'),
+        ['snap-2', 'snap-1', 'live-1', 'live-2']);
+  });
+
+  test('refresh failure records lastError', () async {
+    backend.error = Exception('db gone');
+    await state.refresh();
+    expect(state.lastError, contains('db gone'));
+  });
+
+  test('error event only fails tracked creations', () async {
+    backend.emit(const BackendEvent(EventKind.error,
+        id: 'srv-1', message: 'oops'));
+    await pumpEventQueue();
+    expect(state.creating, isEmpty);
+    expect(state.lastError, 'oops');
+
+    backend.emit(const BackendEvent(EventKind.download,
+        id: 'srv-2', received: 1, total: 2));
+    backend.emit(const BackendEvent(EventKind.error,
+        id: 'srv-2', message: 'disk full'));
+    await pumpEventQueue();
+    expect(state.creating['srv-2']?.failed, isTrue);
+
+    // A late download event does not clear the failure.
+    backend.emit(const BackendEvent(EventKind.download,
+        id: 'srv-2', received: 2, total: 2));
+    await pumpEventQueue();
+    expect(state.creating['srv-2']?.failed, isTrue);
+  });
+
+  test('install lines are capped', () async {
+    backend.emit(const BackendEvent(EventKind.download,
+        id: 'c1', received: 1, total: 2));
+    for (var i = 0; i < 250; i++) {
+      backend.emit(BackendEvent(EventKind.install,
+          id: 'c1', line: 'line-$i'));
+    }
+    await pumpEventQueue();
+    final lines = state.creating['c1']!.installLines;
+    expect(lines.length, 200);
+    expect(lines.last, 'line-249');
+  });
+
   test('actions delegate to backend', () async {
     await state.start('a');
     await state.stop('a');

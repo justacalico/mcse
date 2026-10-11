@@ -1,6 +1,7 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
-/// Root data directory for mcse: instances, runtimes, backups, registry.
+/// Default data directory for mcse when none is supplied: `$MCSE_DATA_DIR`
+/// or the platform data dir.
 pub fn data_dir() -> PathBuf {
     if let Ok(dir) = std::env::var("MCSE_DATA_DIR") {
         return PathBuf::from(dir);
@@ -10,22 +11,22 @@ pub fn data_dir() -> PathBuf {
         .join("mcse")
 }
 
-pub fn instances_dir() -> PathBuf {
-    data_dir().join("instances")
+pub fn instances_dir(root: &Path) -> PathBuf {
+    root.join("instances")
 }
 
-pub fn backups_dir() -> PathBuf {
-    data_dir().join("backups")
+pub fn backups_dir(root: &Path) -> PathBuf {
+    root.join("backups")
 }
 
-pub fn runtimes_dir() -> PathBuf {
-    data_dir().join("runtimes")
+pub fn runtimes_dir(root: &Path) -> PathBuf {
+    root.join("runtimes")
 }
 
-pub fn downloads_dir() -> PathBuf {
-    data_dir().join("downloads")
+pub fn downloads_dir(root: &Path) -> PathBuf {
+    root.join("downloads")
 }
 
-pub fn registry_file() -> PathBuf {
-    data_dir().join("instances.json")
+pub fn registry_file(root: &Path) -> PathBuf {
+    root.join("instances.json")
 }

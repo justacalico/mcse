@@ -6,7 +6,7 @@ use tokio::process::Command;
 /// Parse the `java -version` output (first line like
 /// `openjdk version "21.0.3" 2024-04-16`) into (full, major).
 pub fn parse_version_output(out: &str) -> Option<(String, u32)> {
-    let first = out.lines().next()?;
+    let first = out.lines().find(|l| l.contains('"'))?;
     let start = first.find('"')?;
     let end = first[start + 1..].find('"')? + start + 1;
     let version = first[start + 1..end].to_string();
@@ -41,12 +41,12 @@ fn java_binary(dir: &Path) -> PathBuf {
     }
 }
 
-fn candidate_dirs() -> Vec<PathBuf> {
+fn candidate_dirs(root: &Path) -> Vec<PathBuf> {
     let mut dirs = vec![];
     if let Ok(home) = std::env::var("JAVA_HOME") {
         dirs.push(PathBuf::from(home));
     }
-    dirs.push(paths::runtimes_dir());
+    dirs.push(paths::runtimes_dir(root));
     if cfg!(target_os = "linux") {
         dirs.push(PathBuf::from("/usr/lib/jvm"));
         dirs.push(PathBuf::from("/usr/java"));
@@ -61,7 +61,7 @@ fn candidate_dirs() -> Vec<PathBuf> {
 }
 
 /// Detect every java runtime on the system + managed runtimes.
-pub async fn detect_runtimes() -> Vec<JavaRuntime> {
+pub async fn detect_runtimes(root: &Path) -> Vec<JavaRuntime> {
     let mut found: Vec<JavaRuntime> = vec![];
     let mut seen = std::collections::HashSet::new();
 
@@ -73,7 +73,7 @@ pub async fn detect_runtimes() -> Vec<JavaRuntime> {
         }
     }
 
-    for base in candidate_dirs() {
+    for base in candidate_dirs(root) {
         if !base.is_dir() {
             continue;
         }
@@ -151,18 +151,27 @@ pub fn required_java(game_version: &str) -> u32 {
     }
 }
 
-/// Pick the best runtime for a game version: smallest major >= required,
-/// preferring an exact match.
+/// Pick the best runtime for a game version: exact match first, then the
+/// smallest major >= required. Majors far above the requirement are avoided:
+/// old Minecraft breaks on new Java, so picking one would crash on launch.
 pub fn pick_runtime(runtimes: &[JavaRuntime], required: u32) -> Option<&JavaRuntime> {
-    runtimes
-        .iter()
-        .filter(|r| r.major >= required)
-        .min_by_key(|r| r.major)
+    runtimes.iter().find(|r| r.major == required).or_else(|| {
+        let ceiling = match required {
+            0..=11 => 17,
+            12..=17 => 21,
+            _ => u32::MAX,
+        };
+        runtimes
+            .iter()
+            .filter(|r| r.major >= required && r.major <= ceiling)
+            .min_by_key(|r| r.major)
+    })
 }
 
 /// Download a Temurin JRE from the Adoptium API into the managed runtimes dir.
 pub async fn install_temurin(
     client: &reqwest::Client,
+    root: &Path,
     feature: u32,
     on_file: impl Fn(&str),
 ) -> Result<JavaRuntime> {
@@ -181,10 +190,10 @@ pub async fn install_temurin(
     let url = format!(
         "https://api.adoptium.net/v3/binary/latest/{feature}/ga/{os}/{arch}/jre/hotspot/normal/eclipse"
     );
-    let dest_dir = paths::runtimes_dir().join(format!("temurin-{feature}"));
+    let dest_dir = paths::runtimes_dir(root).join(format!("temurin-{feature}"));
     tokio::fs::create_dir_all(&dest_dir).await?;
-    let archive = paths::downloads_dir().join(format!("temurin-{feature}.bin"));
-    crate::download::download(client, &url, &archive, None, None, |_, _| {}).await?;
+    let archive = paths::downloads_dir(root).join(format!("temurin-{feature}.bin"));
+    crate::download::download(client, &url, &archive, None, None, None, |_, _| {}).await?;
 
     on_file("extracting");
     let dest = dest_dir.clone();
@@ -214,9 +223,13 @@ pub async fn install_temurin(
 }
 
 fn extract_archive(archive: &Path, dest: &Path) -> Result<()> {
-    let name = archive.to_string_lossy();
     let file = std::fs::File::open(archive)?;
-    if name.ends_with(".zip") {
+    let mut magic = [0u8; 4];
+    use std::io::Read;
+    file.take(4).read_exact(&mut magic)?;
+    let file = std::fs::File::open(archive)?;
+    // Adoptium serves .zip on Windows and .tar.gz elsewhere; detect by magic.
+    if magic.starts_with(b"PK") {
         zip::ZipArchive::new(file)?.extract(dest)?;
     } else {
         let gz = flate2::read::GzDecoder::new(file);
@@ -273,8 +286,22 @@ mod tests {
         };
         let all = vec![r21.clone(), r8.clone(), r17.clone()];
         assert_eq!(pick_runtime(&all, 8).unwrap().major, 8);
+        assert_eq!(pick_runtime(&all, 11).unwrap().major, 17);
         assert_eq!(pick_runtime(&all, 17).unwrap().major, 17);
         assert_eq!(pick_runtime(&all, 21).unwrap().major, 21);
         assert!(pick_runtime(std::slice::from_ref(&r8), 21).is_none());
+        // Old MC may not pick a runtime that is far too new.
+        assert!(pick_runtime(std::slice::from_ref(&r21), 8).is_none());
+        assert_eq!(pick_runtime(&all, 20).unwrap().major, 21);
+    }
+
+    #[test]
+    fn parse_stderr_style_output() {
+        // Real JVMs write `java -version` to stderr with stdout empty,
+        // which used to leave a leading blank line in the combined text.
+        let text = "\nopenjdk version \"1.8.0_362\" 2023-01-24";
+        let (v, m) = parse_version_output(text).unwrap();
+        assert_eq!(v, "1.8.0_362");
+        assert_eq!(m, 8);
     }
 }

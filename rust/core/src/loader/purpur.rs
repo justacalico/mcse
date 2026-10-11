@@ -58,7 +58,8 @@ impl LoaderProvider for Purpur {
         Ok(ServerArtifact::Jar {
             url: format!("{API}/{game_version}/{build}/download"),
             filename: format!("purpur-{game_version}-{build}.jar"),
-            sha1: meta.md5, // treated as opaque; md5 hex still verifies via same path
+            sha1: None,
+            md5: meta.md5,
             sha256: None,
         })
     }

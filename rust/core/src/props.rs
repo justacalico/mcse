@@ -1,4 +1,4 @@
-use crate::Result;
+use crate::{Error, Result};
 use std::collections::BTreeMap;
 use std::path::Path;
 
@@ -44,6 +44,18 @@ impl ServerProperties {
         self.map.insert(key.to_string(), value.to_string());
     }
 
+    /// A property key/value may not contain line breaks or `=` in the key;
+    /// anything else would inject extra property lines into the file.
+    fn sanitize(key: &str, value: &str) -> Result<(String, String)> {
+        let key = key.trim();
+        if key.is_empty() || key.contains(['\n', '\r', '=']) || value.contains(['\n', '\r']) {
+            return Err(Error::InvalidInput(format!(
+                "illegal property entry {key:?}"
+            )));
+        }
+        Ok((key.to_string(), value.to_string()))
+    }
+
     /// Merge `changes` into the existing file, preserving untouched keys and
     /// any comments that were already present.
     pub fn update_file(path: &Path, changes: &BTreeMap<String, String>) -> Result<()> {
@@ -52,6 +64,10 @@ impl ServerProperties {
         } else {
             String::new()
         };
+        let changes: BTreeMap<String, String> = changes
+            .iter()
+            .map(|(k, v)| Self::sanitize(k, v))
+            .collect::<Result<_>>()?;
         let mut out = String::new();
         let mut seen = std::collections::HashSet::new();
         for line in existing.lines() {
@@ -75,7 +91,7 @@ impl ServerProperties {
             out.push_str(line);
             out.push('\n');
         }
-        for (k, v) in changes {
+        for (k, v) in &changes {
             if !seen.contains(k) {
                 out.push_str(k);
                 out.push('=');
@@ -83,7 +99,9 @@ impl ServerProperties {
                 out.push('\n');
             }
         }
-        std::fs::write(path, out)?;
+        let tmp = path.with_extension("properties.tmp");
+        std::fs::write(&tmp, out)?;
+        std::fs::rename(tmp, path)?;
         Ok(())
     }
 
@@ -152,5 +170,17 @@ mod tests {
         p.set("a", "1");
         let p2 = ServerProperties::parse(&p.to_text());
         assert_eq!(p2.get("a"), Some("1"));
+    }
+
+    #[test]
+    fn rejects_line_injection() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("server.properties");
+        let mut bad = std::collections::BTreeMap::new();
+        bad.insert("motd".to_string(), "hi\nonline-mode=false".to_string());
+        assert!(ServerProperties::update_file(&path, &bad).is_err());
+        let mut bad_key = std::collections::BTreeMap::new();
+        bad_key.insert("a=b".to_string(), "1".to_string());
+        assert!(ServerProperties::update_file(&path, &bad_key).is_err());
     }
 }

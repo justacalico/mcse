@@ -58,7 +58,8 @@ void main() {
         id: 'c1', message: 'disk full'));
     await tester.pumpAndSettle();
     expect(find.text('Server creation failed'), findsOneWidget);
-    expect(find.text('disk full'), findsOneWidget);
+    // Tile + global error snackbar both show the message.
+    expect(find.text('disk full'), findsWidgets);
 
     await tester.tap(find.text('Dismiss'));
     await tester.pumpAndSettle();

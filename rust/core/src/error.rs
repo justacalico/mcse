@@ -30,6 +30,8 @@ pub enum Error {
     BackupNotFound(String),
     #[error("installer failed: {0}")]
     Installer(String),
+    #[error("invalid input: {0}")]
+    InvalidInput(String),
     #[error("{0}")]
     Msg(String),
 }

@@ -4,7 +4,6 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import 'frb_generated.dart';
-
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `event_dto`, `instance_dto`, `mgr`, `parse_id`, `parse_loader`, `rt`, `status_name`
@@ -27,32 +26,29 @@ Future<List<GameVersionDto>> gameVersions({required String loader}) =>
 
 /// Kick off a create (download + install) in the background. Returns the
 /// new instance id immediately; progress arrives via events.
-Future<String> createInstance({
-  required String name,
-  required String loader,
-  required String gameVersion,
-  required bool acceptEula,
-  required int minRamMb,
-  required int maxRamMb,
-  required Map<String, String> properties,
-}) => McseBridge.instance.api.crateApiCreateInstance(
-  name: name,
-  loader: loader,
-  gameVersion: gameVersion,
-  acceptEula: acceptEula,
-  minRamMb: minRamMb,
-  maxRamMb: maxRamMb,
-  properties: properties,
-);
+Future<String> createInstance(
+        {required String name,
+        required String loader,
+        required String gameVersion,
+        required bool acceptEula,
+        required int minRamMb,
+        required int maxRamMb,
+        required Map<String, String> properties}) =>
+    McseBridge.instance.api.crateApiCreateInstance(
+        name: name,
+        loader: loader,
+        gameVersion: gameVersion,
+        acceptEula: acceptEula,
+        minRamMb: minRamMb,
+        maxRamMb: maxRamMb,
+        properties: properties);
 
 Future<List<InstanceDto>> listInstances() =>
     McseBridge.instance.api.crateApiListInstances();
 
 Future<void> deleteInstance({required String id, required bool removeFiles}) =>
-    McseBridge.instance.api.crateApiDeleteInstance(
-      id: id,
-      removeFiles: removeFiles,
-    );
+    McseBridge.instance.api
+        .crateApiDeleteInstance(id: id, removeFiles: removeFiles);
 
 Future<void> startInstance({required String id}) =>
     McseBridge.instance.api.crateApiStartInstance(id: id);
@@ -75,29 +71,30 @@ Future<List<String>> recentLog({required String id}) =>
 Future<PingDto> pingInstance({required String id}) =>
     McseBridge.instance.api.crateApiPingInstance(id: id);
 
-Future<void> updateInstance({
-  required String id,
-  String? name,
-  int? minRamMb,
-  int? maxRamMb,
-  List<String>? jvmArgs,
-  String? javaPath,
-}) => McseBridge.instance.api.crateApiUpdateInstance(
-  id: id,
-  name: name,
-  minRamMb: minRamMb,
-  maxRamMb: maxRamMb,
-  jvmArgs: jvmArgs,
-  javaPath: javaPath,
-);
+Future<void> updateInstance(
+        {required String id,
+        String? name,
+        int? minRamMb,
+        int? maxRamMb,
+        List<String>? jvmArgs}) =>
+    McseBridge.instance.api.crateApiUpdateInstance(
+        id: id,
+        name: name,
+        minRamMb: minRamMb,
+        maxRamMb: maxRamMb,
+        jvmArgs: jvmArgs);
+
+/// Tri-state java selection: `Some(path)` pins a runtime, `None` clears it
+/// back to auto-detect.
+Future<void> setJava({required String id, String? path}) =>
+    McseBridge.instance.api.crateApiSetJava(id: id, path: path);
 
 Future<Map<String, String>> getProperties({required String id}) =>
     McseBridge.instance.api.crateApiGetProperties(id: id);
 
-Future<void> setProperties({
-  required String id,
-  required Map<String, String> changes,
-}) => McseBridge.instance.api.crateApiSetProperties(id: id, changes: changes);
+Future<void> setProperties(
+        {required String id, required Map<String, String> changes}) =>
+    McseBridge.instance.api.crateApiSetProperties(id: id, changes: changes);
 
 Future<Map<String, String>> defaultProperties() =>
     McseBridge.instance.api.crateApiDefaultProperties();
@@ -198,7 +195,10 @@ class GameVersionDto {
   final String id;
   final bool stable;
 
-  const GameVersionDto({required this.id, required this.stable});
+  const GameVersionDto({
+    required this.id,
+    required this.stable,
+  });
 
   @override
   int get hashCode => id.hashCode ^ stable.hashCode;
@@ -303,7 +303,10 @@ class LoaderDto {
   final String kind;
   final String label;
 
-  const LoaderDto({required this.kind, required this.label});
+  const LoaderDto({
+    required this.kind,
+    required this.label,
+  });
 
   @override
   int get hashCode => kind.hashCode ^ label.hashCode;

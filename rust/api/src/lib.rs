@@ -12,6 +12,7 @@ use std::collections::BTreeMap;
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::sync::Arc;
+use tokio::sync::broadcast;
 use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
 use uuid::Uuid;
@@ -21,7 +22,7 @@ pub struct AppState {
     pub manager: Arc<Manager>,
 }
 
-pub fn router(manager: Arc<Manager>, web_dir: Option<PathBuf>) -> Router {
+pub fn router(manager: Arc<Manager>, web_dir: Option<PathBuf>, cors_permissive: bool) -> Router {
     let state = AppState { manager };
     let api = Router::new()
         .route("/health", get(health))
@@ -58,7 +59,11 @@ pub fn router(manager: Arc<Manager>, web_dir: Option<PathBuf>) -> Router {
         Some(dir) => app.fallback_service(ServeDir::new(dir)),
         None => app,
     };
-    app.layer(CorsLayer::permissive())
+    if cors_permissive {
+        app.layer(CorsLayer::permissive())
+    } else {
+        app
+    }
 }
 
 async fn health() -> Json<serde_json::Value> {
@@ -288,7 +293,12 @@ async fn ws_loop(manager: Arc<Manager>, socket: axum::extract::ws::WebSocket) {
     let (mut tx, mut rx) = socket.split();
     let mut events = manager.subscribe();
     let send = tokio::spawn(async move {
-        while let Ok(event) = events.recv().await {
+        loop {
+            let event = match events.recv().await {
+                Ok(e) => e,
+                Err(broadcast::error::RecvError::Lagged(_)) => continue,
+                Err(broadcast::error::RecvError::Closed) => break,
+            };
             let Ok(text) = serde_json::to_string(&event) else {
                 continue;
             };
@@ -338,8 +348,9 @@ pub async fn serve(
     manager: Arc<Manager>,
     addr: SocketAddr,
     web_dir: Option<PathBuf>,
+    cors_permissive: bool,
 ) -> std::io::Result<()> {
     let listener = tokio::net::TcpListener::bind(addr).await?;
     tracing::info!("mcse-backend listening on {addr}");
-    axum::serve(listener, router(manager, web_dir)).await
+    axum::serve(listener, router(manager, web_dir, cors_permissive)).await
 }

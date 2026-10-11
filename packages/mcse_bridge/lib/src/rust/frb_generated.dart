@@ -4,14 +4,11 @@
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
 import 'api.dart';
-
 import 'dart:async';
 import 'dart:convert';
-
 import 'frb_generated.dart';
 import 'frb_generated.io.dart'
     if (dart.library.js_interop) 'frb_generated.web.dart';
-
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 /// Main entrypoint of the Rust API
@@ -39,8 +36,12 @@ class McseBridge
 
   /// Initialize flutter_rust_bridge in mock mode.
   /// No libraries for FFI are loaded.
-  static void initMock({required McseBridgeApi api}) {
-    instance.initMockImpl(api: api);
+  static void initMock({
+    required McseBridgeApi api,
+  }) {
+    instance.initMockImpl(
+      api: api,
+    );
   }
 
   /// Dispose flutter_rust_bridge
@@ -51,7 +52,7 @@ class McseBridge
 
   @override
   ApiImplConstructor<McseBridgeApiImpl, McseBridgeWire>
-  get apiImplConstructor => McseBridgeApiImpl.new;
+      get apiImplConstructor => McseBridgeApiImpl.new;
 
   @override
   WireConstructor<McseBridgeWire> get wireConstructor =>
@@ -68,15 +69,15 @@ class McseBridge
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => -702884330;
+  int get rustContentHash => -696056010;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
-        stem: 'mcse_frb',
-        ioDirectory: 'rust/frb/target/release/',
-        webPrefix: 'pkg/',
-        wasmBindgenName: 'wasm_bindgen',
-      );
+    stem: 'mcse_frb',
+    ioDirectory: '../../rust/frb/target/release/',
+    webPrefix: 'pkg/',
+    wasmBindgenName: 'wasm_bindgen',
+  );
 }
 
 abstract class McseBridgeApi extends BaseApi {
@@ -84,24 +85,21 @@ abstract class McseBridgeApi extends BaseApi {
 
   Future<BackupDto> crateApiCreateBackup({required String id});
 
-  Future<String> crateApiCreateInstance({
-    required String name,
-    required String loader,
-    required String gameVersion,
-    required bool acceptEula,
-    required int minRamMb,
-    required int maxRamMb,
-    required Map<String, String> properties,
-  });
+  Future<String> crateApiCreateInstance(
+      {required String name,
+      required String loader,
+      required String gameVersion,
+      required bool acceptEula,
+      required int minRamMb,
+      required int maxRamMb,
+      required Map<String, String> properties});
 
   Future<Map<String, String>> crateApiDefaultProperties();
 
   Future<void> crateApiDeleteBackup({required String id, required String name});
 
-  Future<void> crateApiDeleteInstance({
-    required String id,
-    required bool removeFiles,
-  });
+  Future<void> crateApiDeleteInstance(
+      {required String id, required bool removeFiles});
 
   Future<List<GameVersionDto>> crateApiGameVersions({required String loader});
 
@@ -129,20 +127,16 @@ abstract class McseBridgeApi extends BaseApi {
 
   Future<void> crateApiRestartInstance({required String id});
 
-  Future<void> crateApiRestoreBackup({
-    required String id,
-    required String name,
-  });
+  Future<void> crateApiRestoreBackup(
+      {required String id, required String name});
 
-  Future<void> crateApiSendCommand({
-    required String id,
-    required String command,
-  });
+  Future<void> crateApiSendCommand(
+      {required String id, required String command});
 
-  Future<void> crateApiSetProperties({
-    required String id,
-    required Map<String, String> changes,
-  });
+  Future<void> crateApiSetJava({required String id, String? path});
+
+  Future<void> crateApiSetProperties(
+      {required String id, required Map<String, String> changes});
 
   Future<void> crateApiStartInstance({required String id});
 
@@ -150,14 +144,12 @@ abstract class McseBridgeApi extends BaseApi {
 
   Stream<EventDto> crateApiSubscribeEvents();
 
-  Future<void> crateApiUpdateInstance({
-    required String id,
-    String? name,
-    int? minRamMb,
-    int? maxRamMb,
-    List<String>? jvmArgs,
-    String? javaPath,
-  });
+  Future<void> crateApiUpdateInstance(
+      {required String id,
+      String? name,
+      int? minRamMb,
+      int? maxRamMb,
+      List<String>? jvmArgs});
 }
 
 class McseBridgeApiImpl extends McseBridgeApiImplPlatform
@@ -171,806 +163,697 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
 
   @override
   Future<String> crateApiBackendDataDir() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 1,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiBackendDataDirConstMeta,
-        argValues: [],
-        apiImpl: this,
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 1, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_String,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiBackendDataDirConstMeta,
+      argValues: [],
+      apiImpl: this,
+    ));
   }
 
-  TaskConstMeta get kCrateApiBackendDataDirConstMeta =>
-      const TaskConstMeta(debugName: "backend_data_dir", argNames: []);
+  TaskConstMeta get kCrateApiBackendDataDirConstMeta => const TaskConstMeta(
+        debugName: "backend_data_dir",
+        argNames: [],
+      );
 
   @override
   Future<BackupDto> crateApiCreateBackup({required String id}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(id, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 2,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_backup_dto,
-          decodeErrorData: sse_decode_AnyhowException,
-        ),
-        constMeta: kCrateApiCreateBackupConstMeta,
-        argValues: [id],
-        apiImpl: this,
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(id, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 2, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_backup_dto,
+        decodeErrorData: sse_decode_AnyhowException,
       ),
-    );
+      constMeta: kCrateApiCreateBackupConstMeta,
+      argValues: [id],
+      apiImpl: this,
+    ));
   }
 
-  TaskConstMeta get kCrateApiCreateBackupConstMeta =>
-      const TaskConstMeta(debugName: "create_backup", argNames: ["id"]);
+  TaskConstMeta get kCrateApiCreateBackupConstMeta => const TaskConstMeta(
+        debugName: "create_backup",
+        argNames: ["id"],
+      );
 
   @override
-  Future<String> crateApiCreateInstance({
-    required String name,
-    required String loader,
-    required String gameVersion,
-    required bool acceptEula,
-    required int minRamMb,
-    required int maxRamMb,
-    required Map<String, String> properties,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(name, serializer);
-          sse_encode_String(loader, serializer);
-          sse_encode_String(gameVersion, serializer);
-          sse_encode_bool(acceptEula, serializer);
-          sse_encode_u_32(minRamMb, serializer);
-          sse_encode_u_32(maxRamMb, serializer);
-          sse_encode_Map_String_String_None(properties, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 3,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_AnyhowException,
-        ),
-        constMeta: kCrateApiCreateInstanceConstMeta,
-        argValues: [
-          name,
-          loader,
-          gameVersion,
-          acceptEula,
-          minRamMb,
-          maxRamMb,
-          properties,
-        ],
-        apiImpl: this,
+  Future<String> crateApiCreateInstance(
+      {required String name,
+      required String loader,
+      required String gameVersion,
+      required bool acceptEula,
+      required int minRamMb,
+      required int maxRamMb,
+      required Map<String, String> properties}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(name, serializer);
+        sse_encode_String(loader, serializer);
+        sse_encode_String(gameVersion, serializer);
+        sse_encode_bool(acceptEula, serializer);
+        sse_encode_u_32(minRamMb, serializer);
+        sse_encode_u_32(maxRamMb, serializer);
+        sse_encode_Map_String_String_None(properties, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 3, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_String,
+        decodeErrorData: sse_decode_AnyhowException,
       ),
-    );
+      constMeta: kCrateApiCreateInstanceConstMeta,
+      argValues: [
+        name,
+        loader,
+        gameVersion,
+        acceptEula,
+        minRamMb,
+        maxRamMb,
+        properties
+      ],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiCreateInstanceConstMeta => const TaskConstMeta(
-    debugName: "create_instance",
-    argNames: [
-      "name",
-      "loader",
-      "gameVersion",
-      "acceptEula",
-      "minRamMb",
-      "maxRamMb",
-      "properties",
-    ],
-  );
+        debugName: "create_instance",
+        argNames: [
+          "name",
+          "loader",
+          "gameVersion",
+          "acceptEula",
+          "minRamMb",
+          "maxRamMb",
+          "properties"
+        ],
+      );
 
   @override
   Future<Map<String, String>> crateApiDefaultProperties() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 4,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_Map_String_String_None,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiDefaultPropertiesConstMeta,
-        argValues: [],
-        apiImpl: this,
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 4, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_Map_String_String_None,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiDefaultPropertiesConstMeta,
+      argValues: [],
+      apiImpl: this,
+    ));
   }
 
-  TaskConstMeta get kCrateApiDefaultPropertiesConstMeta =>
-      const TaskConstMeta(debugName: "default_properties", argNames: []);
+  TaskConstMeta get kCrateApiDefaultPropertiesConstMeta => const TaskConstMeta(
+        debugName: "default_properties",
+        argNames: [],
+      );
 
   @override
-  Future<void> crateApiDeleteBackup({
-    required String id,
-    required String name,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(id, serializer);
-          sse_encode_String(name, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 5,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: sse_decode_AnyhowException,
-        ),
-        constMeta: kCrateApiDeleteBackupConstMeta,
-        argValues: [id, name],
-        apiImpl: this,
+  Future<void> crateApiDeleteBackup(
+      {required String id, required String name}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(id, serializer);
+        sse_encode_String(name, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 5, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: sse_decode_AnyhowException,
       ),
-    );
+      constMeta: kCrateApiDeleteBackupConstMeta,
+      argValues: [id, name],
+      apiImpl: this,
+    ));
   }
 
-  TaskConstMeta get kCrateApiDeleteBackupConstMeta =>
-      const TaskConstMeta(debugName: "delete_backup", argNames: ["id", "name"]);
+  TaskConstMeta get kCrateApiDeleteBackupConstMeta => const TaskConstMeta(
+        debugName: "delete_backup",
+        argNames: ["id", "name"],
+      );
 
   @override
-  Future<void> crateApiDeleteInstance({
-    required String id,
-    required bool removeFiles,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(id, serializer);
-          sse_encode_bool(removeFiles, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 6,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: sse_decode_AnyhowException,
-        ),
-        constMeta: kCrateApiDeleteInstanceConstMeta,
-        argValues: [id, removeFiles],
-        apiImpl: this,
+  Future<void> crateApiDeleteInstance(
+      {required String id, required bool removeFiles}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(id, serializer);
+        sse_encode_bool(removeFiles, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 6, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: sse_decode_AnyhowException,
       ),
-    );
+      constMeta: kCrateApiDeleteInstanceConstMeta,
+      argValues: [id, removeFiles],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiDeleteInstanceConstMeta => const TaskConstMeta(
-    debugName: "delete_instance",
-    argNames: ["id", "removeFiles"],
-  );
+        debugName: "delete_instance",
+        argNames: ["id", "removeFiles"],
+      );
 
   @override
   Future<List<GameVersionDto>> crateApiGameVersions({required String loader}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(loader, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 7,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_list_game_version_dto,
-          decodeErrorData: sse_decode_AnyhowException,
-        ),
-        constMeta: kCrateApiGameVersionsConstMeta,
-        argValues: [loader],
-        apiImpl: this,
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(loader, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 7, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_game_version_dto,
+        decodeErrorData: sse_decode_AnyhowException,
       ),
-    );
+      constMeta: kCrateApiGameVersionsConstMeta,
+      argValues: [loader],
+      apiImpl: this,
+    ));
   }
 
-  TaskConstMeta get kCrateApiGameVersionsConstMeta =>
-      const TaskConstMeta(debugName: "game_versions", argNames: ["loader"]);
+  TaskConstMeta get kCrateApiGameVersionsConstMeta => const TaskConstMeta(
+        debugName: "game_versions",
+        argNames: ["loader"],
+      );
 
   @override
   Future<Map<String, String>> crateApiGetProperties({required String id}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(id, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 8,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_Map_String_String_None,
-          decodeErrorData: sse_decode_AnyhowException,
-        ),
-        constMeta: kCrateApiGetPropertiesConstMeta,
-        argValues: [id],
-        apiImpl: this,
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(id, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 8, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_Map_String_String_None,
+        decodeErrorData: sse_decode_AnyhowException,
       ),
-    );
+      constMeta: kCrateApiGetPropertiesConstMeta,
+      argValues: [id],
+      apiImpl: this,
+    ));
   }
 
-  TaskConstMeta get kCrateApiGetPropertiesConstMeta =>
-      const TaskConstMeta(debugName: "get_properties", argNames: ["id"]);
+  TaskConstMeta get kCrateApiGetPropertiesConstMeta => const TaskConstMeta(
+        debugName: "get_properties",
+        argNames: ["id"],
+      );
 
   @override
   Future<void> crateApiInitBackend({String? dataDir}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_opt_String(dataDir, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 9,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: sse_decode_AnyhowException,
-        ),
-        constMeta: kCrateApiInitBackendConstMeta,
-        argValues: [dataDir],
-        apiImpl: this,
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_opt_String(dataDir, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 9, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: sse_decode_AnyhowException,
       ),
-    );
+      constMeta: kCrateApiInitBackendConstMeta,
+      argValues: [dataDir],
+      apiImpl: this,
+    ));
   }
 
-  TaskConstMeta get kCrateApiInitBackendConstMeta =>
-      const TaskConstMeta(debugName: "init_backend", argNames: ["dataDir"]);
+  TaskConstMeta get kCrateApiInitBackendConstMeta => const TaskConstMeta(
+        debugName: "init_backend",
+        argNames: ["dataDir"],
+      );
 
   @override
   Future<JavaRuntimeDto> crateApiInstallJava({required int feature}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_u_32(feature, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 10,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_java_runtime_dto,
-          decodeErrorData: sse_decode_AnyhowException,
-        ),
-        constMeta: kCrateApiInstallJavaConstMeta,
-        argValues: [feature],
-        apiImpl: this,
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_u_32(feature, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 10, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_java_runtime_dto,
+        decodeErrorData: sse_decode_AnyhowException,
       ),
-    );
+      constMeta: kCrateApiInstallJavaConstMeta,
+      argValues: [feature],
+      apiImpl: this,
+    ));
   }
 
-  TaskConstMeta get kCrateApiInstallJavaConstMeta =>
-      const TaskConstMeta(debugName: "install_java", argNames: ["feature"]);
+  TaskConstMeta get kCrateApiInstallJavaConstMeta => const TaskConstMeta(
+        debugName: "install_java",
+        argNames: ["feature"],
+      );
 
   @override
   Future<List<JavaRuntimeDto>> crateApiJavaRuntimes() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 11,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_list_java_runtime_dto,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiJavaRuntimesConstMeta,
-        argValues: [],
-        apiImpl: this,
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 11, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_java_runtime_dto,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiJavaRuntimesConstMeta,
+      argValues: [],
+      apiImpl: this,
+    ));
   }
 
-  TaskConstMeta get kCrateApiJavaRuntimesConstMeta =>
-      const TaskConstMeta(debugName: "java_runtimes", argNames: []);
+  TaskConstMeta get kCrateApiJavaRuntimesConstMeta => const TaskConstMeta(
+        debugName: "java_runtimes",
+        argNames: [],
+      );
 
   @override
   Future<void> crateApiKillInstance({required String id}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(id, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 12,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: sse_decode_AnyhowException,
-        ),
-        constMeta: kCrateApiKillInstanceConstMeta,
-        argValues: [id],
-        apiImpl: this,
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(id, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 12, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: sse_decode_AnyhowException,
       ),
-    );
+      constMeta: kCrateApiKillInstanceConstMeta,
+      argValues: [id],
+      apiImpl: this,
+    ));
   }
 
-  TaskConstMeta get kCrateApiKillInstanceConstMeta =>
-      const TaskConstMeta(debugName: "kill_instance", argNames: ["id"]);
+  TaskConstMeta get kCrateApiKillInstanceConstMeta => const TaskConstMeta(
+        debugName: "kill_instance",
+        argNames: ["id"],
+      );
 
   @override
   Future<List<BackupDto>> crateApiListBackups({required String id}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(id, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 13,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_list_backup_dto,
-          decodeErrorData: sse_decode_AnyhowException,
-        ),
-        constMeta: kCrateApiListBackupsConstMeta,
-        argValues: [id],
-        apiImpl: this,
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(id, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 13, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_backup_dto,
+        decodeErrorData: sse_decode_AnyhowException,
       ),
-    );
+      constMeta: kCrateApiListBackupsConstMeta,
+      argValues: [id],
+      apiImpl: this,
+    ));
   }
 
-  TaskConstMeta get kCrateApiListBackupsConstMeta =>
-      const TaskConstMeta(debugName: "list_backups", argNames: ["id"]);
+  TaskConstMeta get kCrateApiListBackupsConstMeta => const TaskConstMeta(
+        debugName: "list_backups",
+        argNames: ["id"],
+      );
 
   @override
   Future<List<InstanceDto>> crateApiListInstances() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 14,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_list_instance_dto,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiListInstancesConstMeta,
-        argValues: [],
-        apiImpl: this,
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 14, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_instance_dto,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiListInstancesConstMeta,
+      argValues: [],
+      apiImpl: this,
+    ));
   }
 
-  TaskConstMeta get kCrateApiListInstancesConstMeta =>
-      const TaskConstMeta(debugName: "list_instances", argNames: []);
+  TaskConstMeta get kCrateApiListInstancesConstMeta => const TaskConstMeta(
+        debugName: "list_instances",
+        argNames: [],
+      );
 
   @override
   Future<List<LoaderDto>> crateApiListLoaders() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 15,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_list_loader_dto,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiListLoadersConstMeta,
-        argValues: [],
-        apiImpl: this,
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 15, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_loader_dto,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiListLoadersConstMeta,
+      argValues: [],
+      apiImpl: this,
+    ));
   }
 
-  TaskConstMeta get kCrateApiListLoadersConstMeta =>
-      const TaskConstMeta(debugName: "list_loaders", argNames: []);
+  TaskConstMeta get kCrateApiListLoadersConstMeta => const TaskConstMeta(
+        debugName: "list_loaders",
+        argNames: [],
+      );
 
   @override
   Future<PingDto> crateApiPingInstance({required String id}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(id, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 16,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_ping_dto,
-          decodeErrorData: sse_decode_AnyhowException,
-        ),
-        constMeta: kCrateApiPingInstanceConstMeta,
-        argValues: [id],
-        apiImpl: this,
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(id, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 16, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_ping_dto,
+        decodeErrorData: sse_decode_AnyhowException,
       ),
-    );
+      constMeta: kCrateApiPingInstanceConstMeta,
+      argValues: [id],
+      apiImpl: this,
+    ));
   }
 
-  TaskConstMeta get kCrateApiPingInstanceConstMeta =>
-      const TaskConstMeta(debugName: "ping_instance", argNames: ["id"]);
+  TaskConstMeta get kCrateApiPingInstanceConstMeta => const TaskConstMeta(
+        debugName: "ping_instance",
+        argNames: ["id"],
+      );
 
   @override
   Future<List<String>> crateApiRecentLog({required String id}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(id, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 17,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_list_String,
-          decodeErrorData: sse_decode_AnyhowException,
-        ),
-        constMeta: kCrateApiRecentLogConstMeta,
-        argValues: [id],
-        apiImpl: this,
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(id, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 17, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_String,
+        decodeErrorData: sse_decode_AnyhowException,
       ),
-    );
+      constMeta: kCrateApiRecentLogConstMeta,
+      argValues: [id],
+      apiImpl: this,
+    ));
   }
 
-  TaskConstMeta get kCrateApiRecentLogConstMeta =>
-      const TaskConstMeta(debugName: "recent_log", argNames: ["id"]);
+  TaskConstMeta get kCrateApiRecentLogConstMeta => const TaskConstMeta(
+        debugName: "recent_log",
+        argNames: ["id"],
+      );
 
   @override
   Future<int> crateApiRequiredJava({required String gameVersion}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(gameVersion, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 18,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_u_32,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiRequiredJavaConstMeta,
-        argValues: [gameVersion],
-        apiImpl: this,
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(gameVersion, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 18, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_u_32,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiRequiredJavaConstMeta,
+      argValues: [gameVersion],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiRequiredJavaConstMeta => const TaskConstMeta(
-    debugName: "required_java",
-    argNames: ["gameVersion"],
-  );
+        debugName: "required_java",
+        argNames: ["gameVersion"],
+      );
 
   @override
   Future<void> crateApiRestartInstance({required String id}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(id, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 19,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: sse_decode_AnyhowException,
-        ),
-        constMeta: kCrateApiRestartInstanceConstMeta,
-        argValues: [id],
-        apiImpl: this,
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(id, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 19, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: sse_decode_AnyhowException,
       ),
-    );
+      constMeta: kCrateApiRestartInstanceConstMeta,
+      argValues: [id],
+      apiImpl: this,
+    ));
   }
 
-  TaskConstMeta get kCrateApiRestartInstanceConstMeta =>
-      const TaskConstMeta(debugName: "restart_instance", argNames: ["id"]);
+  TaskConstMeta get kCrateApiRestartInstanceConstMeta => const TaskConstMeta(
+        debugName: "restart_instance",
+        argNames: ["id"],
+      );
 
   @override
-  Future<void> crateApiRestoreBackup({
-    required String id,
-    required String name,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(id, serializer);
-          sse_encode_String(name, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 20,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: sse_decode_AnyhowException,
-        ),
-        constMeta: kCrateApiRestoreBackupConstMeta,
-        argValues: [id, name],
-        apiImpl: this,
+  Future<void> crateApiRestoreBackup(
+      {required String id, required String name}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(id, serializer);
+        sse_encode_String(name, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 20, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: sse_decode_AnyhowException,
       ),
-    );
+      constMeta: kCrateApiRestoreBackupConstMeta,
+      argValues: [id, name],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiRestoreBackupConstMeta => const TaskConstMeta(
-    debugName: "restore_backup",
-    argNames: ["id", "name"],
-  );
+        debugName: "restore_backup",
+        argNames: ["id", "name"],
+      );
 
   @override
-  Future<void> crateApiSendCommand({
-    required String id,
-    required String command,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(id, serializer);
-          sse_encode_String(command, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 21,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: sse_decode_AnyhowException,
-        ),
-        constMeta: kCrateApiSendCommandConstMeta,
-        argValues: [id, command],
-        apiImpl: this,
+  Future<void> crateApiSendCommand(
+      {required String id, required String command}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(id, serializer);
+        sse_encode_String(command, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 21, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: sse_decode_AnyhowException,
       ),
-    );
+      constMeta: kCrateApiSendCommandConstMeta,
+      argValues: [id, command],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiSendCommandConstMeta => const TaskConstMeta(
-    debugName: "send_command",
-    argNames: ["id", "command"],
-  );
+        debugName: "send_command",
+        argNames: ["id", "command"],
+      );
 
   @override
-  Future<void> crateApiSetProperties({
-    required String id,
-    required Map<String, String> changes,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(id, serializer);
-          sse_encode_Map_String_String_None(changes, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 22,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: sse_decode_AnyhowException,
-        ),
-        constMeta: kCrateApiSetPropertiesConstMeta,
-        argValues: [id, changes],
-        apiImpl: this,
+  Future<void> crateApiSetJava({required String id, String? path}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(id, serializer);
+        sse_encode_opt_String(path, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 22, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: sse_decode_AnyhowException,
       ),
-    );
+      constMeta: kCrateApiSetJavaConstMeta,
+      argValues: [id, path],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiSetJavaConstMeta => const TaskConstMeta(
+        debugName: "set_java",
+        argNames: ["id", "path"],
+      );
+
+  @override
+  Future<void> crateApiSetProperties(
+      {required String id, required Map<String, String> changes}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(id, serializer);
+        sse_encode_Map_String_String_None(changes, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 23, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: sse_decode_AnyhowException,
+      ),
+      constMeta: kCrateApiSetPropertiesConstMeta,
+      argValues: [id, changes],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiSetPropertiesConstMeta => const TaskConstMeta(
-    debugName: "set_properties",
-    argNames: ["id", "changes"],
-  );
+        debugName: "set_properties",
+        argNames: ["id", "changes"],
+      );
 
   @override
   Future<void> crateApiStartInstance({required String id}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(id, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 23,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: sse_decode_AnyhowException,
-        ),
-        constMeta: kCrateApiStartInstanceConstMeta,
-        argValues: [id],
-        apiImpl: this,
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(id, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 24, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: sse_decode_AnyhowException,
       ),
-    );
+      constMeta: kCrateApiStartInstanceConstMeta,
+      argValues: [id],
+      apiImpl: this,
+    ));
   }
 
-  TaskConstMeta get kCrateApiStartInstanceConstMeta =>
-      const TaskConstMeta(debugName: "start_instance", argNames: ["id"]);
+  TaskConstMeta get kCrateApiStartInstanceConstMeta => const TaskConstMeta(
+        debugName: "start_instance",
+        argNames: ["id"],
+      );
 
   @override
   Future<void> crateApiStopInstance({required String id}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(id, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 24,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: sse_decode_AnyhowException,
-        ),
-        constMeta: kCrateApiStopInstanceConstMeta,
-        argValues: [id],
-        apiImpl: this,
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(id, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 25, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: sse_decode_AnyhowException,
       ),
-    );
+      constMeta: kCrateApiStopInstanceConstMeta,
+      argValues: [id],
+      apiImpl: this,
+    ));
   }
 
-  TaskConstMeta get kCrateApiStopInstanceConstMeta =>
-      const TaskConstMeta(debugName: "stop_instance", argNames: ["id"]);
+  TaskConstMeta get kCrateApiStopInstanceConstMeta => const TaskConstMeta(
+        debugName: "stop_instance",
+        argNames: ["id"],
+      );
 
   @override
   Stream<EventDto> crateApiSubscribeEvents() {
     final sink = RustStreamSink<EventDto>();
-    unawaited(
-      handler.executeNormal(
-        NormalTask(
-          callFfi: (port_) {
-            final serializer = SseSerializer(generalizedFrbRustBinding);
-            sse_encode_StreamSink_event_dto_Sse(sink, serializer);
-            pdeCallFfi(
-              generalizedFrbRustBinding,
-              serializer,
-              funcId: 25,
-              port: port_,
-            );
-          },
-          codec: SseCodec(
-            decodeSuccessData: sse_decode_unit,
-            decodeErrorData: null,
-          ),
-          constMeta: kCrateApiSubscribeEventsConstMeta,
-          argValues: [sink],
-          apiImpl: this,
-        ),
+    unawaited(handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_StreamSink_event_dto_Sse(sink, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 26, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiSubscribeEventsConstMeta,
+      argValues: [sink],
+      apiImpl: this,
+    )));
     return sink.stream;
   }
 
-  TaskConstMeta get kCrateApiSubscribeEventsConstMeta =>
-      const TaskConstMeta(debugName: "subscribe_events", argNames: ["sink"]);
+  TaskConstMeta get kCrateApiSubscribeEventsConstMeta => const TaskConstMeta(
+        debugName: "subscribe_events",
+        argNames: ["sink"],
+      );
 
   @override
-  Future<void> crateApiUpdateInstance({
-    required String id,
-    String? name,
-    int? minRamMb,
-    int? maxRamMb,
-    List<String>? jvmArgs,
-    String? javaPath,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(id, serializer);
-          sse_encode_opt_String(name, serializer);
-          sse_encode_opt_box_autoadd_u_32(minRamMb, serializer);
-          sse_encode_opt_box_autoadd_u_32(maxRamMb, serializer);
-          sse_encode_opt_list_String(jvmArgs, serializer);
-          sse_encode_opt_String(javaPath, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 26,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: sse_decode_AnyhowException,
-        ),
-        constMeta: kCrateApiUpdateInstanceConstMeta,
-        argValues: [id, name, minRamMb, maxRamMb, jvmArgs, javaPath],
-        apiImpl: this,
+  Future<void> crateApiUpdateInstance(
+      {required String id,
+      String? name,
+      int? minRamMb,
+      int? maxRamMb,
+      List<String>? jvmArgs}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(id, serializer);
+        sse_encode_opt_String(name, serializer);
+        sse_encode_opt_box_autoadd_u_32(minRamMb, serializer);
+        sse_encode_opt_box_autoadd_u_32(maxRamMb, serializer);
+        sse_encode_opt_list_String(jvmArgs, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 27, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: sse_decode_AnyhowException,
       ),
-    );
+      constMeta: kCrateApiUpdateInstanceConstMeta,
+      argValues: [id, name, minRamMb, maxRamMb, jvmArgs],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiUpdateInstanceConstMeta => const TaskConstMeta(
-    debugName: "update_instance",
-    argNames: ["id", "name", "minRamMb", "maxRamMb", "jvmArgs", "javaPath"],
-  );
+        debugName: "update_instance",
+        argNames: ["id", "name", "minRamMb", "maxRamMb", "jvmArgs"],
+      );
 
   @protected
   AnyhowException dco_decode_AnyhowException(dynamic raw) {
@@ -981,10 +864,8 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
   @protected
   Map<String, String> dco_decode_Map_String_String_None(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
-    return Map.fromEntries(
-      dco_decode_list_record_string_string(raw)
-          .map((e) => MapEntry(e.$1, e.$2)),
-    );
+    return Map.fromEntries(dco_decode_list_record_string_string(raw)
+        .map((e) => MapEntry(e.$1, e.$2)));
   }
 
   @protected
@@ -1207,7 +1088,10 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
     if (arr.length != 2) {
       throw Exception('Expected 2 elements, got ${arr.length}');
     }
-    return (dco_decode_String(arr[0]), dco_decode_String(arr[1]));
+    return (
+      dco_decode_String(arr[0]),
+      dco_decode_String(arr[1]),
+    );
   }
 
   @protected
@@ -1243,8 +1127,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
 
   @protected
   Map<String, String> sse_decode_Map_String_String_None(
-    SseDeserializer deserializer,
-  ) {
+      SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_list_record_string_string(deserializer);
     return Map.fromEntries(inner.map((e) => MapEntry(e.$1, e.$2)));
@@ -1252,8 +1135,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
 
   @protected
   RustStreamSink<EventDto> sse_decode_StreamSink_event_dto_Sse(
-    SseDeserializer deserializer,
-  ) {
+      SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     throw UnimplementedError('Unreachable ()');
   }
@@ -1272,10 +1154,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
     var var_sizeBytes = sse_decode_u_64(deserializer);
     var var_createdAt = sse_decode_i_64(deserializer);
     return BackupDto(
-      name: var_name,
-      sizeBytes: var_sizeBytes,
-      createdAt: var_createdAt,
-    );
+        name: var_name, sizeBytes: var_sizeBytes, createdAt: var_createdAt);
   }
 
   @protected
@@ -1308,15 +1187,14 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
     var var_name = sse_decode_opt_String(deserializer);
     var var_message = sse_decode_opt_String(deserializer);
     return EventDto(
-      kind: var_kind,
-      id: var_id,
-      status: var_status,
-      line: var_line,
-      received: var_received,
-      total: var_total,
-      name: var_name,
-      message: var_message,
-    );
+        kind: var_kind,
+        id: var_id,
+        status: var_status,
+        line: var_line,
+        received: var_received,
+        total: var_total,
+        name: var_name,
+        message: var_message);
   }
 
   @protected
@@ -1349,19 +1227,18 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
     var var_status = sse_decode_String(deserializer);
     var var_createdAt = sse_decode_i_64(deserializer);
     return InstanceDto(
-      id: var_id,
-      name: var_name,
-      loader: var_loader,
-      gameVersion: var_gameVersion,
-      dir: var_dir,
-      jar: var_jar,
-      javaPath: var_javaPath,
-      minRamMb: var_minRamMb,
-      maxRamMb: var_maxRamMb,
-      jvmArgs: var_jvmArgs,
-      status: var_status,
-      createdAt: var_createdAt,
-    );
+        id: var_id,
+        name: var_name,
+        loader: var_loader,
+        gameVersion: var_gameVersion,
+        dir: var_dir,
+        jar: var_jar,
+        javaPath: var_javaPath,
+        minRamMb: var_minRamMb,
+        maxRamMb: var_maxRamMb,
+        jvmArgs: var_jvmArgs,
+        status: var_status,
+        createdAt: var_createdAt);
   }
 
   @protected
@@ -1371,10 +1248,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
     var var_version = sse_decode_String(deserializer);
     var var_major = sse_decode_u_32(deserializer);
     return JavaRuntimeDto(
-      path: var_path,
-      version: var_version,
-      major: var_major,
-    );
+        path: var_path, version: var_version, major: var_major);
   }
 
   @protected
@@ -1403,8 +1277,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
 
   @protected
   List<GameVersionDto> sse_decode_list_game_version_dto(
-    SseDeserializer deserializer,
-  ) {
+      SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     var len_ = sse_decode_i_32(deserializer);
@@ -1429,8 +1302,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
 
   @protected
   List<JavaRuntimeDto> sse_decode_list_java_runtime_dto(
-    SseDeserializer deserializer,
-  ) {
+      SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     var len_ = sse_decode_i_32(deserializer);
@@ -1462,8 +1334,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
 
   @protected
   List<(String, String)> sse_decode_list_record_string_string(
-    SseDeserializer deserializer,
-  ) {
+      SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     var len_ = sse_decode_i_32(deserializer);
@@ -1535,18 +1406,16 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
     var var_versionName = sse_decode_String(deserializer);
     var var_protocol = sse_decode_i_64(deserializer);
     return PingDto(
-      motd: var_motd,
-      onlinePlayers: var_onlinePlayers,
-      maxPlayers: var_maxPlayers,
-      versionName: var_versionName,
-      protocol: var_protocol,
-    );
+        motd: var_motd,
+        onlinePlayers: var_onlinePlayers,
+        maxPlayers: var_maxPlayers,
+        versionName: var_versionName,
+        protocol: var_protocol);
   }
 
   @protected
   (String, String) sse_decode_record_string_string(
-    SseDeserializer deserializer,
-  ) {
+      SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_field0 = sse_decode_String(deserializer);
     var var_field1 = sse_decode_String(deserializer);
@@ -1584,40 +1453,30 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
 
   @protected
   void sse_encode_AnyhowException(
-    AnyhowException self,
-    SseSerializer serializer,
-  ) {
+      AnyhowException self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.message, serializer);
   }
 
   @protected
   void sse_encode_Map_String_String_None(
-    Map<String, String> self,
-    SseSerializer serializer,
-  ) {
+      Map<String, String> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_record_string_string(
-      self.entries.map((e) => (e.key, e.value)).toList(),
-      serializer,
-    );
+        self.entries.map((e) => (e.key, e.value)).toList(), serializer);
   }
 
   @protected
   void sse_encode_StreamSink_event_dto_Sse(
-    RustStreamSink<EventDto> self,
-    SseSerializer serializer,
-  ) {
+      RustStreamSink<EventDto> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(
-      self.setupAndSerialize(
-        codec: SseCodec(
+        self.setupAndSerialize(
+            codec: SseCodec(
           decodeSuccessData: sse_decode_event_dto,
           decodeErrorData: sse_decode_AnyhowException,
-        ),
-      ),
-      serializer,
-    );
+        )),
+        serializer);
   }
 
   @protected
@@ -1667,9 +1526,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
 
   @protected
   void sse_encode_game_version_dto(
-    GameVersionDto self,
-    SseSerializer serializer,
-  ) {
+      GameVersionDto self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.id, serializer);
     sse_encode_bool(self.stable, serializer);
@@ -1700,9 +1557,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
 
   @protected
   void sse_encode_java_runtime_dto(
-    JavaRuntimeDto self,
-    SseSerializer serializer,
-  ) {
+      JavaRuntimeDto self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.path, serializer);
     sse_encode_String(self.version, serializer);
@@ -1720,9 +1575,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
 
   @protected
   void sse_encode_list_backup_dto(
-    List<BackupDto> self,
-    SseSerializer serializer,
-  ) {
+      List<BackupDto> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
@@ -1732,9 +1585,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
 
   @protected
   void sse_encode_list_game_version_dto(
-    List<GameVersionDto> self,
-    SseSerializer serializer,
-  ) {
+      List<GameVersionDto> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
@@ -1744,9 +1595,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
 
   @protected
   void sse_encode_list_instance_dto(
-    List<InstanceDto> self,
-    SseSerializer serializer,
-  ) {
+      List<InstanceDto> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
@@ -1756,9 +1605,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
 
   @protected
   void sse_encode_list_java_runtime_dto(
-    List<JavaRuntimeDto> self,
-    SseSerializer serializer,
-  ) {
+      List<JavaRuntimeDto> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
@@ -1768,9 +1615,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
 
   @protected
   void sse_encode_list_loader_dto(
-    List<LoaderDto> self,
-    SseSerializer serializer,
-  ) {
+      List<LoaderDto> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
@@ -1780,9 +1625,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
 
   @protected
   void sse_encode_list_prim_u_8_strict(
-    Uint8List self,
-    SseSerializer serializer,
-  ) {
+      Uint8List self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     serializer.buffer.putUint8List(self);
@@ -1790,9 +1633,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
 
   @protected
   void sse_encode_list_record_string_string(
-    List<(String, String)> self,
-    SseSerializer serializer,
-  ) {
+      List<(String, String)> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
@@ -1839,9 +1680,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
 
   @protected
   void sse_encode_opt_list_String(
-    List<String>? self,
-    SseSerializer serializer,
-  ) {
+      List<String>? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     sse_encode_bool(self != null, serializer);
@@ -1862,9 +1701,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
 
   @protected
   void sse_encode_record_string_string(
-    (String, String) self,
-    SseSerializer serializer,
-  ) {
+      (String, String) self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.$1, serializer);
     sse_encode_String(self.$2, serializer);

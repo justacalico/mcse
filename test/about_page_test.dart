@@ -69,4 +69,15 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Check failed'), findsOneWidget);
   });
+
+  testWidgets('version load failure shows placeholder', (tester) async {
+    await openAbout(
+        tester,
+        FakeBackend(),
+        update: UpdateState(
+          checker: StubVersionChecker(const AppUpdate()),
+          currentVersion: () async => throw StateError('no pkg'),
+        ));
+    expect(find.text('?'), findsOneWidget);
+  });
 }

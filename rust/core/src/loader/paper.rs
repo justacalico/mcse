@@ -81,6 +81,7 @@ impl LoaderProvider for Paper {
             filename: app.name,
             sha1: None,
             sha256: Some(app.sha256),
+            md5: None,
         })
     }
 }

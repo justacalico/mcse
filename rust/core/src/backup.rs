@@ -3,35 +3,21 @@ use crate::{paths, Error, Result};
 use chrono::Utc;
 use std::path::{Path, PathBuf};
 
-/// Top-level entries included in a backup besides `world*` dirs.
-const EXTRA: &[&str] = &[
-    "server.properties",
-    "eula.txt",
-    "ops.json",
-    "whitelist.json",
-    "banned-players.json",
-    "banned-ips.json",
-    "bukkit.yml",
-    "spigot.yml",
-    "purpur.yml",
-    "config",
-    "paper-global.yml",
-];
+/// Entries inside an instance dir that are never worth backing up.
+const EXCLUDED: &[&str] = &["logs", "cache", "crash-reports", "tmp", ".jars"];
 
-fn backup_root(instance: &Instance) -> PathBuf {
-    paths::backups_dir().join(instance.id.to_string())
+fn backup_root(root: &Path, instance: &Instance) -> PathBuf {
+    paths::backups_dir(root).join(instance.id.to_string())
 }
 
-/// Directories/files worth backing up inside an instance dir.
+/// Everything in the instance dir minus caches/logs — a modded instance
+/// needs its mods, configs and libraries to restore correctly.
 fn included(dir: &Path) -> Vec<PathBuf> {
     let mut out = vec![];
     if let Ok(rd) = std::fs::read_dir(dir) {
         for e in rd.flatten() {
             let name = e.file_name().to_string_lossy().to_string();
-            let include = name.starts_with("world")
-                || EXTRA.contains(&name.as_str())
-                || (e.path().is_file() && (name.ends_with(".yml") || name.ends_with(".yaml")));
-            if include {
+            if !EXCLUDED.contains(&name.as_str()) && !name.ends_with(".part") {
                 out.push(e.path());
             }
         }
@@ -39,10 +25,16 @@ fn included(dir: &Path) -> Vec<PathBuf> {
     out
 }
 
-pub async fn create(instance: &Instance) -> Result<BackupMeta> {
-    let root = backup_root(instance);
+pub async fn create(root: &Path, instance: &Instance) -> Result<BackupMeta> {
+    let root = backup_root(root, instance);
     tokio::fs::create_dir_all(&root).await?;
-    let name = format!("backup-{}.zip", Utc::now().format("%Y%m%d-%H%M%S"));
+    let mut name = format!("backup-{}.zip", Utc::now().format("%Y%m%d-%H%M%S"));
+    for i in 2.. {
+        if !root.join(&name).exists() {
+            break;
+        }
+        name = format!("backup-{}-{i}.zip", Utc::now().format("%Y%m%d-%H%M%S"));
+    }
     let path = root.join(&name);
     let dir = instance.dir.clone();
     let path_c = path.clone();
@@ -99,8 +91,8 @@ fn add_dir(
     Ok(())
 }
 
-pub async fn list(instance: &Instance) -> Result<Vec<BackupMeta>> {
-    let root = backup_root(instance);
+pub async fn list(root: &Path, instance: &Instance) -> Result<Vec<BackupMeta>> {
+    let root = backup_root(root, instance);
     let mut out = vec![];
     let mut rd = match tokio::fs::read_dir(&root).await {
         Ok(rd) => rd,
@@ -126,17 +118,17 @@ pub async fn list(instance: &Instance) -> Result<Vec<BackupMeta>> {
     Ok(out)
 }
 
-pub async fn remove(instance: &Instance, name: &str) -> Result<()> {
-    let path = backup_path(instance, name)?;
+pub async fn remove(root: &Path, instance: &Instance, name: &str) -> Result<()> {
+    let path = backup_path(root, instance, name)?;
     tokio::fs::remove_file(path).await?;
     Ok(())
 }
 
-fn backup_path(instance: &Instance, name: &str) -> Result<PathBuf> {
+fn backup_path(root: &Path, instance: &Instance, name: &str) -> Result<PathBuf> {
     if name.contains('/') || name.contains('\\') || name.contains("..") {
         return Err(Error::BackupNotFound(name.into()));
     }
-    let path = backup_root(instance).join(name);
+    let path = backup_root(root, instance).join(name);
     if !path.exists() {
         return Err(Error::BackupNotFound(name.into()));
     }
@@ -145,8 +137,8 @@ fn backup_path(instance: &Instance, name: &str) -> Result<PathBuf> {
 
 /// Extract a backup over the instance dir. Caller must ensure the server
 /// is stopped.
-pub async fn restore(instance: &Instance, name: &str) -> Result<()> {
-    let path = backup_path(instance, name)?;
+pub async fn restore(root: &Path, instance: &Instance, name: &str) -> Result<()> {
+    let path = backup_path(root, instance, name)?;
     let dir = instance.dir.clone();
     tokio::task::spawn_blocking(move || {
         let file = std::fs::File::open(&path)?;
@@ -194,10 +186,8 @@ mod tests {
     }
 
     #[tokio::test]
-    #[serial_test::serial]
     async fn backup_roundtrip() {
         let data = tempfile::tempdir().unwrap();
-        std::env::set_var("MCSE_DATA_DIR", data.path());
         let idir = tempfile::tempdir().unwrap();
         std::fs::create_dir_all(idir.path().join("world/region")).unwrap();
         std::fs::write(idir.path().join("world/region/r.0.0.mca"), b"chunk").unwrap();
@@ -205,22 +195,21 @@ mod tests {
         std::fs::write(idir.path().join("server.jar"), b"binary").unwrap();
         let inst = instance(idir.path().to_path_buf());
 
-        let meta = create(&inst).await.unwrap();
+        let meta = create(data.path(), &inst).await.unwrap();
         assert!(meta.path.exists());
-        let entries = list(&inst).await.unwrap();
+        let entries = list(data.path(), &inst).await.unwrap();
         assert_eq!(entries.len(), 1);
 
         std::fs::remove_file(idir.path().join("world/region/r.0.0.mca")).unwrap();
-        restore(&inst, &meta.name).await.unwrap();
+        restore(data.path(), &inst, &meta.name).await.unwrap();
         assert_eq!(
             std::fs::read(idir.path().join("world/region/r.0.0.mca")).unwrap(),
             b"chunk"
         );
 
-        remove(&inst, &meta.name).await.unwrap();
-        assert!(list(&inst).await.unwrap().is_empty());
-        assert!(remove(&inst, "nope.zip").await.is_err());
-        assert!(remove(&inst, "../evil").await.is_err());
-        std::env::remove_var("MCSE_DATA_DIR");
+        remove(data.path(), &inst, &meta.name).await.unwrap();
+        assert!(list(data.path(), &inst).await.unwrap().is_empty());
+        assert!(remove(data.path(), &inst, "nope.zip").await.is_err());
+        assert!(remove(data.path(), &inst, "../evil").await.is_err());
     }
 }

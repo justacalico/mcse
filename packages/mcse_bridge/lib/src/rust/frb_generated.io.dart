@@ -4,13 +4,10 @@
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
 import 'api.dart';
-
 import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi' as ffi;
-
 import 'frb_generated.dart';
-
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_io.dart';
 
 abstract class McseBridgeApiImplPlatform extends BaseApiImpl<McseBridgeWire> {
@@ -122,13 +119,11 @@ abstract class McseBridgeApiImplPlatform extends BaseApiImpl<McseBridgeWire> {
 
   @protected
   Map<String, String> sse_decode_Map_String_String_None(
-    SseDeserializer deserializer,
-  );
+      SseDeserializer deserializer);
 
   @protected
   RustStreamSink<EventDto> sse_decode_StreamSink_event_dto_Sse(
-    SseDeserializer deserializer,
-  );
+      SseDeserializer deserializer);
 
   @protected
   String sse_decode_String(SseDeserializer deserializer);
@@ -168,16 +163,14 @@ abstract class McseBridgeApiImplPlatform extends BaseApiImpl<McseBridgeWire> {
 
   @protected
   List<GameVersionDto> sse_decode_list_game_version_dto(
-    SseDeserializer deserializer,
-  );
+      SseDeserializer deserializer);
 
   @protected
   List<InstanceDto> sse_decode_list_instance_dto(SseDeserializer deserializer);
 
   @protected
   List<JavaRuntimeDto> sse_decode_list_java_runtime_dto(
-    SseDeserializer deserializer,
-  );
+      SseDeserializer deserializer);
 
   @protected
   List<LoaderDto> sse_decode_list_loader_dto(SseDeserializer deserializer);
@@ -187,8 +180,7 @@ abstract class McseBridgeApiImplPlatform extends BaseApiImpl<McseBridgeWire> {
 
   @protected
   List<(String, String)> sse_decode_list_record_string_string(
-    SseDeserializer deserializer,
-  );
+      SseDeserializer deserializer);
 
   @protected
   LoaderDto sse_decode_loader_dto(SseDeserializer deserializer);
@@ -210,8 +202,7 @@ abstract class McseBridgeApiImplPlatform extends BaseApiImpl<McseBridgeWire> {
 
   @protected
   (String, String) sse_decode_record_string_string(
-    SseDeserializer deserializer,
-  );
+      SseDeserializer deserializer);
 
   @protected
   int sse_decode_u_32(SseDeserializer deserializer);
@@ -230,21 +221,15 @@ abstract class McseBridgeApiImplPlatform extends BaseApiImpl<McseBridgeWire> {
 
   @protected
   void sse_encode_AnyhowException(
-    AnyhowException self,
-    SseSerializer serializer,
-  );
+      AnyhowException self, SseSerializer serializer);
 
   @protected
   void sse_encode_Map_String_String_None(
-    Map<String, String> self,
-    SseSerializer serializer,
-  );
+      Map<String, String> self, SseSerializer serializer);
 
   @protected
   void sse_encode_StreamSink_event_dto_Sse(
-    RustStreamSink<EventDto> self,
-    SseSerializer serializer,
-  );
+      RustStreamSink<EventDto> self, SseSerializer serializer);
 
   @protected
   void sse_encode_String(String self, SseSerializer serializer);
@@ -266,9 +251,7 @@ abstract class McseBridgeApiImplPlatform extends BaseApiImpl<McseBridgeWire> {
 
   @protected
   void sse_encode_game_version_dto(
-    GameVersionDto self,
-    SseSerializer serializer,
-  );
+      GameVersionDto self, SseSerializer serializer);
 
   @protected
   void sse_encode_i_64(PlatformInt64 self, SseSerializer serializer);
@@ -278,54 +261,38 @@ abstract class McseBridgeApiImplPlatform extends BaseApiImpl<McseBridgeWire> {
 
   @protected
   void sse_encode_java_runtime_dto(
-    JavaRuntimeDto self,
-    SseSerializer serializer,
-  );
+      JavaRuntimeDto self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_String(List<String> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_backup_dto(
-    List<BackupDto> self,
-    SseSerializer serializer,
-  );
+      List<BackupDto> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_game_version_dto(
-    List<GameVersionDto> self,
-    SseSerializer serializer,
-  );
+      List<GameVersionDto> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_instance_dto(
-    List<InstanceDto> self,
-    SseSerializer serializer,
-  );
+      List<InstanceDto> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_java_runtime_dto(
-    List<JavaRuntimeDto> self,
-    SseSerializer serializer,
-  );
+      List<JavaRuntimeDto> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_loader_dto(
-    List<LoaderDto> self,
-    SseSerializer serializer,
-  );
+      List<LoaderDto> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_prim_u_8_strict(
-    Uint8List self,
-    SseSerializer serializer,
-  );
+      Uint8List self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_record_string_string(
-    List<(String, String)> self,
-    SseSerializer serializer,
-  );
+      List<(String, String)> self, SseSerializer serializer);
 
   @protected
   void sse_encode_loader_dto(LoaderDto self, SseSerializer serializer);
@@ -347,9 +314,7 @@ abstract class McseBridgeApiImplPlatform extends BaseApiImpl<McseBridgeWire> {
 
   @protected
   void sse_encode_record_string_string(
-    (String, String) self,
-    SseSerializer serializer,
-  );
+      (String, String) self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_32(int self, SseSerializer serializer);
@@ -375,9 +340,9 @@ class McseBridgeWire implements BaseWire {
 
   /// Holds the symbol lookup function.
   final ffi.Pointer<T> Function<T extends ffi.NativeType>(String symbolName)
-  _lookup;
+      _lookup;
 
   /// The symbols are looked up in [dynamicLibrary].
   McseBridgeWire(ffi.DynamicLibrary dynamicLibrary)
-    : _lookup = dynamicLibrary.lookup;
+      : _lookup = dynamicLibrary.lookup;
 }

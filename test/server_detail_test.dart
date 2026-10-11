@@ -259,6 +259,54 @@ void main() {
     expect(find.text('Auto (best match)'), findsOneWidget);
   });
 
+  testWidgets('console follows output only when scrolled to bottom',
+      (tester) async {
+    final backend = FakeBackend();
+    await openDetail(tester, backend,
+        server: testServer(status: ServerStatus.running));
+    await tester.pumpAndSettle();
+    for (var i = 0; i < 60; i++) {
+      backend.emit(BackendEvent(EventKind.log,
+          id: 'srv-1', line: 'line-$i'));
+    }
+    await tester.pumpAndSettle();
+    // Scroll up: new lines must not yank the view back down.
+    await tester.drag(
+        find.byType(ListView).first, const Offset(0, 400));
+    await tester.pump();
+    backend.emit(const BackendEvent(EventKind.log,
+        id: 'srv-1', line: 'newest'));
+    await tester.pump();
+    expect(find.text('line-59'), findsNothing);
+  });
+
+  testWidgets('settings tab reloads fields when server changes',
+      (tester) async {
+    final backend = FakeBackend();
+    await openDetail(tester, backend);
+    await tester.tap(find.text('Settings'));
+    await tester.pumpAndSettle();
+    backend.instancesResult = [testServer(name: 'Renamed')];
+    backend.emit(const BackendEvent(EventKind.created, id: 'srv-2'));
+    await tester.pumpAndSettle();
+    final name = tester
+        .widget<TextField>(find.byType(TextField).first)
+        .controller!
+        .text;
+    expect(name, 'Renamed');
+  });
+
+  testWidgets('settings tab keeps a custom java path selectable',
+      (tester) async {
+    final backend = FakeBackend();
+    await openDetail(
+        tester, backend,
+        server: testServer(javaPath: '/opt/jdk19/bin/java'));
+    await tester.tap(find.text('Settings'));
+    await tester.pumpAndSettle();
+    expect(find.text('/opt/jdk19/bin/java'), findsOneWidget);
+  });
+
   testWidgets('settings tab save failure shows snackbar', (tester) async {
     final backend = FakeBackend();
     await openDetail(tester, backend);

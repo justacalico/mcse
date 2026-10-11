@@ -57,7 +57,7 @@ class _CreatePageState extends State<CreatePage> {
         setState(() => _versions = versions);
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && _loader == kind) {
         setState(() {
           _versions = const [];
           _error = e.toString();
@@ -138,7 +138,13 @@ class _CreatePageState extends State<CreatePage> {
               FilterChip(
                 label: const Text('Releases only'),
                 selected: _stableOnly,
-                onSelected: (v) => setState(() => _stableOnly = v),
+                onSelected: (v) => setState(() {
+                  _stableOnly = v;
+                  if (_version != null &&
+                      !_shown.any((x) => x.id == _version)) {
+                    _version = null;
+                  }
+                }),
               ),
             ],
           ),

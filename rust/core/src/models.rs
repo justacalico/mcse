@@ -52,6 +52,7 @@ pub enum ServerArtifact {
         filename: String,
         sha1: Option<String>,
         sha256: Option<String>,
+        md5: Option<String>,
     },
     /// An installer jar that must be executed to produce the server files.
     Installer {
