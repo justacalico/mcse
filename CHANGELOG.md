@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.1.2 - 2026-10-11
+#### Bug Fixes
+- 加载与保存失败时展示错误而非无限加载 - (abc0733) - HttpAnimations
+- Pages 独立域名下使用根路径 base-href - (f037aae) - HttpAnimations
+- 包注册表查询兼容错误响应 - (2a9cc31) - HttpAnimations
+
+- - -
+
 ## v0.1.1 - 2026-10-11
 #### Bug Fixes
 - Flatpak 桌面文件图标名与组件 ID 对齐 - (54c01be) - HttpAnimations
