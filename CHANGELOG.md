@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.2.0 - 2026-10-11
+#### Features
+- 窄屏时使用底部导航栏替代侧边栏 - (41893ac) - HttpAnimations
+- 自定义 macOS 风格窗口顶栏 - (0e3fdee) - HttpAnimations
+
+- - -
+
 ## v0.1.5 - 2026-10-11
 #### Bug Fixes
 - 无版本变更时跳过自动发布 - (9dd3923) - HttpAnimations
