@@ -450,10 +450,19 @@ class _BackupsTabState extends State<BackupsTab> {
       children: [
         Padding(
           padding: const EdgeInsets.all(8),
-          child: FilledButton.icon(
-            icon: const Icon(Icons.backup),
-            label: Text(_busy ? 'Working…' : 'Create backup'),
-            onPressed: _busy ? null : _create,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: SizedBox(
+                width: double.infinity,
+                height: 40,
+                child: FilledButton.icon(
+                  icon: const Icon(Icons.backup),
+                  label: Text(_busy ? 'Working…' : 'Create backup'),
+                  onPressed: _busy ? null : _create,
+                ),
+              ),
+            ),
           ),
         ),
         Expanded(
