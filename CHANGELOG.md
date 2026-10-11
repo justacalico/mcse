@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.1.5 - 2026-10-11
+#### Bug Fixes
+- 无版本变更时跳过自动发布 - (9dd3923) - HttpAnimations
+
+- - -
+
 ## v0.1.4 - 2026-10-11
 #### Bug Fixes
 - 修复代码审查发现的正确性与安全问题 - (36e4aca) - HttpAnimations
