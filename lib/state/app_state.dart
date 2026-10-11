@@ -107,7 +107,7 @@ class AppState extends ChangeNotifier {
   List<String> logOf(String id) => logs[id] ?? const [];
 
   Future<void> loadRecentLog(String id) async {
-    logs[id] = await backend.recentLog(id);
+    logs[id] = List.of(await backend.recentLog(id));
     notifyListeners();
   }
 

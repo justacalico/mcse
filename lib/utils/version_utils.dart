@@ -92,14 +92,8 @@ class Version implements Comparable<Version> {
   static bool _isNumeric(String value) =>
       value.isNotEmpty && value.runes.every((r) => r >= 48 && r <= 57);
 
-  static BigInt? _tryParseBigInt(String value) {
-    if (!_isNumeric(value)) return null;
-    try {
-      return BigInt.parse(value);
-    } on FormatException {
-      return null;
-    }
-  }
+  static BigInt? _tryParseBigInt(String value) =>
+      _isNumeric(value) ? BigInt.parse(value) : null;
 
   @override
   String toString() {

@@ -1,0 +1,26 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mcse/models/app_update.dart';
+
+void main() {
+  test('copyWith', () {
+    const a = AppUpdate(currentVersion: '1.0.0');
+    final b = a.copyWith(latestVersion: '2.0.0', updateAvailable: true);
+    expect(b.currentVersion, '1.0.0');
+    expect(b.latestVersion, '2.0.0');
+    expect(b.updateAvailable, isTrue);
+    expect(b.releaseUrl, '');
+    final c = b.copyWith(releaseUrl: 'https://x');
+    expect(c.releaseUrl, 'https://x');
+    expect(c.latestVersion, '2.0.0');
+  });
+
+  test('equality and hashCode', () {
+    const a = AppUpdate(currentVersion: '1', latestVersion: '2');
+    const b = AppUpdate(currentVersion: '1', latestVersion: '2');
+    const c = AppUpdate(currentVersion: '1', latestVersion: '3');
+    expect(a, b);
+    expect(a.hashCode, b.hashCode);
+    expect(a, isNot(c));
+    expect(a, isNot(isA<String>()));
+  });
+}
