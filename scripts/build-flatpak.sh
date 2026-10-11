@@ -19,11 +19,11 @@ trap 'rm -rf "$WORK"' EXIT
 command -v flatpak-builder >/dev/null || {
   echo "build-flatpak: flatpak-builder not installed" >&2; exit 1; }
 
-if ! flatpak remote-list --columns=name 2>/dev/null | grep -qx flathub; then
-  flatpak remote-add --if-not-exists flathub \
+if ! flatpak remote-list --user --columns=name 2>/dev/null | grep -qx flathub; then
+  flatpak remote-add --user --if-not-exists flathub \
     https://dl.flathub.org/repo/flathub.flatpakrepo
 fi
-flatpak install -y --noninteractive flathub \
+flatpak install --user -y --noninteractive flathub \
   org.freedesktop.Platform//24.08 org.freedesktop.Sdk//24.08 >/dev/null
 
 mkdir -p "$WORK/src"
