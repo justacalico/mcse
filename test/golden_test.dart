@@ -65,6 +65,21 @@ void main() {
         matchesGoldenFile('goldens/detail_console.png'));
   });
 
+  testWidgets('server detail backups', (tester) async {
+    final backend = FakeBackend()..instancesResult = [testServer()];
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(testApp(backend));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Test Server'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Backups'));
+    await tester.pumpAndSettle();
+    await expectLater(find.byType(MaterialApp),
+        matchesGoldenFile('goldens/detail_backups.png'));
+  });
+
   testWidgets('settings page', (tester) async {
     final backend = FakeBackend();
     tester.view.physicalSize = const Size(1280, 800);
