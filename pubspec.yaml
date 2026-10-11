@@ -1,7 +1,7 @@
 name: mcse
 description: "Minecraft Java Edition server manager."
 publish_to: 'none'
-version: 0.2.0+8
+version: 0.3.0+9
 
 environment:
   sdk: ^3.13.5

@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.3.0 - 2026-10-11
+#### Features
+- 添加 OLED 纯黑主题 - (0e2637b) - HttpAnimations
+
+- - -
+
 ## v0.2.0 - 2026-10-11
 #### Features
 - 窄屏时使用底部导航栏替代侧边栏 - (41893ac) - HttpAnimations
