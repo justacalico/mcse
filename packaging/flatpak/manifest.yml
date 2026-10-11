@@ -1,0 +1,22 @@
+app-id: @APPID@
+runtime: org.freedesktop.Platform
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
+command: mcse
+finish-args:
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --share=network
+  - --filesystem=home
+modules:
+  - name: mcse
+    buildsystem: simple
+    build-commands:
+      - install -D mcse /app/bin/mcse
+      - cp -r lib data /app/bin/
+      - install -D @APPID@.desktop /app/share/applications/@APPID@.desktop
+      - install -D @APPID@.png /app/share/icons/hicolor/256x256/apps/@APPID@.png
+      - install -D @APPID@.metainfo.xml /app/share/metainfo/@APPID@.metainfo.xml
+    sources:
+      - type: dir
+        path: src

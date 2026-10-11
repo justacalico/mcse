@@ -1,0 +1,490 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      build_all:
+        description: 'Build all targets (server, server-windows, server-macos, linux, windows, macos)'
+        type: boolean
+        default: true
+      create_release:
+        description: 'Create a versioned release from this build'
+        type: boolean
+        default: false
+      merge_request_id:
+        description: 'Merge request ID to embed in the build (development builds only)'
+        type: string
+        default: ''
+      merge_request_url:
+        description: 'Merge request URL to embed in the build (development builds only)'
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+  actions: read
+
+env:
+  FLUTTER_VERSION: "3.47.6"
+  RUST_VERSION: "1.99.0"
+
+concurrency:
+  group: ci-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  setup:
+    name: Setup build metadata
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      build_number: ${{ steps.meta.outputs.build_number }}
+      build_date: ${{ steps.meta.outputs.build_date }}
+      build_all: ${{ steps.meta.outputs.build_all }}
+      targets: ${{ steps.meta.outputs.targets }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Read version and build metadata
+        id: meta
+        run: |
+          VERSION=$(awk '/^\[workspace.package\]/{f=1} f&&/^version = /{gsub(/"/,"",$3); print $3; exit}' rust/Cargo.toml)
+          BUILD_NUMBER=$(date +%s | cut -c4-10)
+          BUILD_DATE=$(date +%Y-%m-%d)
+          if [ -n "${{ inputs.build_all }}" ]; then
+            BUILD_ALL="${{ inputs.build_all }}"
+          else
+            BUILD_ALL="true"
+          fi
+          if [ "$BUILD_ALL" = "true" ]; then
+            TARGETS='[{"target":"server","os":"ubuntu-latest"},{"target":"server-windows","os":"windows-latest"},{"target":"server-macos","os":"macos-latest"},{"target":"linux","os":"ubuntu-latest"},{"target":"windows","os":"windows-latest"},{"target":"macos","os":"macos-latest"}]'
+          else
+            TARGETS='[{"target":"server","os":"ubuntu-latest"}]'
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "build_date=$BUILD_DATE" >> "$GITHUB_OUTPUT"
+          echo "build_all=$BUILD_ALL" >> "$GITHUB_OUTPUT"
+          echo "targets=$TARGETS" >> "$GITHUB_OUTPUT"
+
+  verify-backend:
+    name: Verify backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@1.99.0
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+
+      - name: Install cocogitto
+        run: cargo install cocogitto --version 7.0.0
+
+      - name: Check commits
+        run: cog check
+
+      - name: Check formatting
+        run: cargo fmt --manifest-path rust/Cargo.toml -- --check
+
+      - name: Run clippy
+        run: cargo clippy --manifest-path rust/Cargo.toml --all-targets -- -D warnings
+
+      - name: Run tests
+        run: cargo test --manifest-path rust/Cargo.toml
+
+  verify-frontend:
+    name: Verify frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Install Xvfb
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb
+
+      - name: Analyze and test app
+        run: |
+          flutter config --no-analytics >/dev/null
+          flutter pub get
+          flutter analyze --no-pub
+          xvfb-run -a flutter test --coverage --no-pub
+          python3 - <<'PY'
+          lf = lh = 0
+          for line in open('coverage/lcov.info'):
+              if line.startswith('LF:'): lf += int(line[3:])
+              elif line.startswith('LH:'): lh += int(line[3:])
+          assert lf > 0 and lh == lf, f'line coverage {lh}/{lf}'
+          print(f'line coverage 100% ({lh}/{lf})')
+          PY
+
+      - name: Analyze landing page
+        run: |
+          cd landing
+          flutter pub get
+          flutter analyze --no-pub
+
+  build:
+    name: Build ${{ matrix.target }}
+    needs: [setup, verify-backend, verify-frontend]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.setup.outputs.targets) }}
+    env:
+      VERSION: ${{ needs.setup.outputs.version }}
+      BUILD_NUMBER: ${{ needs.setup.outputs.build_number }}
+      BUILD_DATE: ${{ needs.setup.outputs.build_date }}
+      MERGE_REQUEST_ID: ${{ github.event_name == 'pull_request' && github.event.pull_request.number || inputs.merge_request_id || '' }}
+      MERGE_REQUEST_URL: ${{ github.event_name == 'pull_request' && github.event.pull_request.html_url || inputs.merge_request_url || '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Install Flutter
+        if: matrix.target != 'server' && matrix.target != 'server-windows' && matrix.target != 'server-macos'
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@1.99.0
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+
+      - name: Install Linux build dependencies
+        if: matrix.target == 'linux' || matrix.target == 'server'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq clang cmake ninja-build pkg-config libgtk-3-dev libblkid-dev liblzma-dev zip dpkg-dev rpm curl squashfs-tools flatpak flatpak-builder
+
+      - name: Build backend binary
+        if: matrix.target == 'server' || matrix.target == 'server-windows' || matrix.target == 'server-macos'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo build --release --manifest-path rust/Cargo.toml -p mcse-api
+          mkdir -p artifacts
+          case "${{ matrix.target }}" in
+            server-windows)
+              cp rust/target/release/mcse-backend.exe artifacts/mcse-backend-windows-x86_64.exe ;;
+            server-macos)
+              cp rust/target/release/mcse-backend artifacts/mcse-backend-macos-arm64 ;;
+            *)
+              cp rust/target/release/mcse-backend artifacts/mcse-backend-linux-x86_64 ;;
+          esac
+
+      - name: Build Linux desktop packages
+        if: matrix.target == 'linux'
+        run: |
+          set -euo pipefail
+          ARTIFACTS_DIR="$GITHUB_WORKSPACE/artifacts"
+          mkdir -p "$ARTIFACTS_DIR"
+          flutter config --no-analytics >/dev/null
+          flutter pub get
+          flutter config --enable-linux-desktop
+          flutter build linux --release --build-name="$VERSION" --build-number="$BUILD_NUMBER"
+          BUNDLE="build/linux/x64/release/bundle"
+          tar -czf "$ARTIFACTS_DIR/mcse-linux-x86_64.tar.gz" -C "$BUNDLE" .
+          (cd "$BUNDLE" && zip -r "$ARTIFACTS_DIR/mcse-linux-x86_64.zip" . >/dev/null)
+          pkgdir="$GITHUB_WORKSPACE/mcse-deb"
+          mkdir -p "$pkgdir/opt/mcse" "$pkgdir/usr/bin" "$pkgdir/usr/share/applications" "$pkgdir/usr/share/icons/hicolor/256x256/apps" "$pkgdir/DEBIAN"
+          cp -r "$BUNDLE/." "$pkgdir/opt/mcse/"
+          ln -sf /opt/mcse/mcse "$pkgdir/usr/bin/mcse"
+          cp packaging/mcse.desktop "$pkgdir/usr/share/applications/"
+          cp packaging/icons/mcse-256.png "$pkgdir/usr/share/icons/hicolor/256x256/apps/mcse.png"
+          {
+            echo "Package: mcse"
+            echo "Version: $VERSION"
+            echo "Section: misc"
+            echo "Priority: optional"
+            echo "Architecture: amd64"
+            echo "Maintainer: HttpAnimations <ci@gitlab.com>"
+            echo "Description: Minecraft Java Edition server manager"
+          } > "$pkgdir/DEBIAN/control"
+          dpkg-deb --build "$pkgdir" "$ARTIFACTS_DIR/mcse-linux-x86_64.deb" >/dev/null
+          rm -rf "$pkgdir"
+          scripts/build-rpm.sh "$BUNDLE" "$VERSION" x86_64 "$ARTIFACTS_DIR/mcse-linux-x86_64.rpm" "$BUILD_NUMBER"
+          scripts/build-appimage.sh "$BUNDLE" "$VERSION" "$ARTIFACTS_DIR/mcse-linux-x86_64.AppImage"
+          scripts/build-flatpak.sh "$BUNDLE" "$VERSION" "$ARTIFACTS_DIR/mcse-linux-x86_64.flatpak" "$ARTIFACTS_DIR/mcse-flatpak-repo"
+
+      - name: Build Windows package
+        if: matrix.target == 'windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARTIFACTS_DIR="$GITHUB_WORKSPACE/artifacts"
+          mkdir -p "$ARTIFACTS_DIR"
+          flutter config --no-analytics >/dev/null
+          flutter pub get
+          flutter config --enable-windows-desktop
+          flutter build windows --release --build-name="$VERSION" --build-number="$BUILD_NUMBER"
+          RELEASE_DIR="build/windows/x64/runner/Release"
+          if [ ! -d "$RELEASE_DIR" ]; then
+            echo "Expected Windows build output at $RELEASE_DIR is missing" >&2
+            exit 1
+          fi
+          powershell -NoProfile -Command \
+            "Compress-Archive -Path '$(cygpath -w "$RELEASE_DIR")\\*' -DestinationPath '$(cygpath -w "$ARTIFACTS_DIR/mcse-windows-x86_64.zip")' -Force"
+
+      - name: Build macOS package
+        if: matrix.target == 'macos'
+        run: |
+          set -euo pipefail
+          ARTIFACTS_DIR="$GITHUB_WORKSPACE/artifacts"
+          mkdir -p "$ARTIFACTS_DIR"
+          flutter config --no-analytics >/dev/null
+          flutter pub get
+          flutter config --enable-macos-desktop
+          flutter build macos --release --build-name="$VERSION" --build-number="$BUILD_NUMBER"
+          APP="build/macos/Build/Products/Release/mcse.app"
+          if [ ! -d "$APP" ]; then
+            APP=$(find build/macos/Build/Products/Release -maxdepth 1 -name '*.app' | head -1)
+          fi
+          codesign --force --deep --sign - "$APP"
+          (cd "$(dirname "$APP")" && zip -r "$ARTIFACTS_DIR/mcse-macos-arm64.zip" "$(basename "$APP")" >/dev/null)
+          hdiutil create -volname "mcse" -srcfolder "$APP" -ov -format UDZO "$ARTIFACTS_DIR/mcse-macos-arm64.dmg" >/dev/null
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: artifacts/*
+          if-no-files-found: error
+          retention-days: 400
+
+  nightly:
+    name: Nightly release
+    runs-on: ubuntu-latest
+    needs: [setup, build]
+    if: ${{ !cancelled() && needs.build.result == 'success' && needs.setup.outputs.build_all == 'true' && github.ref == 'refs/heads/main' && inputs.merge_request_id == '' && (github.event_name == 'push' || github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && (inputs.create_release == false || inputs.create_release == 'false'))) }}
+    permissions:
+      contents: write
+    concurrency:
+      group: release-ops
+      cancel-in-progress: false
+    outputs:
+      release_tag: ${{ steps.meta.outputs.release_tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Determine release tag
+        id: meta
+        run: echo "release_tag=nightly" >> "$GITHUB_OUTPUT"
+
+      - name: Move nightly tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch --tags --force
+          git tag -f nightly "$GITHUB_SHA"
+          git push -f origin nightly
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Prepare release assets
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+          find artifacts -type f \( -name 'mcse*' -o -name 'SHA256SUMS.txt' \) -exec cp {} release-assets/ \;
+          rm -rf release-assets/mcse-flatpak-repo
+          ls -la release-assets/
+
+      - name: Generate checksums
+        working-directory: release-assets
+        run: |
+          sha256sum * > ../SHA256SUMS.txt
+          cat ../SHA256SUMS.txt
+
+      - name: Delete existing nightly assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view nightly -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release view nightly -R "$GITHUB_REPOSITORY" --json assets -q '.assets[].name' 2>/dev/null | while read -r asset; do
+              [ -n "$asset" ] && gh release delete-asset nightly -R "$GITHUB_REPOSITORY" "$asset" --yes 2>/dev/null || true
+            done
+          fi
+
+      - name: Update nightly release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: nightly
+          name: Nightly Build
+          body: |
+            Automated nightly build from commit ${{ github.sha }}
+
+            **Branch:** ${{ github.ref_name }}
+            **Version:** ${{ needs.setup.outputs.version }}
+            **Build:** #${{ github.run_number }}
+            **Date:** ${{ needs.setup.outputs.build_date }}
+            **Commit:** ${{ github.sha }}
+
+            > This release is automatically updated on every push. Artifacts are untested nightly builds.
+          files: |
+            release-assets/*
+            SHA256SUMS.txt
+          prerelease: true
+          make_latest: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: [setup, build]
+    if: ${{ !cancelled() && needs.build.result == 'success' && needs.setup.outputs.build_all == 'true' && inputs.merge_request_id == '' && ((github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && (inputs.create_release == true || inputs.create_release == 'true')) || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))) }}
+    permissions:
+      contents: write
+    concurrency:
+      group: release-ops
+      cancel-in-progress: false
+    outputs:
+      release_tag: ${{ steps.meta.outputs.release_tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Determine release tag
+        id: meta
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            echo "release_tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "release_tag=v${{ needs.setup.outputs.version }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create version tag
+        if: github.event_name == 'workflow_dispatch' && (inputs.create_release == true || inputs.create_release == 'true')
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch --tags --force
+          TAG="${{ steps.meta.outputs.release_tag }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            if [ "$(git rev-parse "$TAG")" != "$GITHUB_SHA" ]; then
+              echo "Tag $TAG exists on a different commit" >&2
+              exit 1
+            fi
+          else
+            git tag "$TAG" "$GITHUB_SHA"
+            git push origin "$TAG"
+          fi
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Prepare release assets
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+          find artifacts -type f -name 'mcse*' -exec cp {} release-assets/ \;
+          rm -rf release-assets/mcse-flatpak-repo
+          TAG="${{ steps.meta.outputs.release_tag }}"
+          git archive --format=tar.gz --prefix="mcse-${TAG#v}/" \
+            -o "release-assets/mcse-${TAG}-source.tar.gz" "$TAG"
+          ls -la release-assets/
+
+      - name: Generate checksums
+        working-directory: release-assets
+        run: |
+          sha256sum * > ../SHA256SUMS.txt
+          cat ../SHA256SUMS.txt
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.release_tag }}
+          name: mcse ${{ steps.meta.outputs.release_tag }}
+          generate_release_notes: true
+          body: |
+            **Version:** ${{ needs.setup.outputs.version }}
+            **Build:** #${{ github.run_number }}
+            **Date:** ${{ needs.setup.outputs.build_date }}
+            **Commit:** ${{ github.sha }}
+
+            ### Artifacts
+            - Backend binaries (Linux x86_64, Windows x86_64, macOS arm64)
+            - Linux desktop (x86_64: tar.gz, zip, deb, rpm, AppImage, flatpak)
+            - Windows package (x86_64: zip)
+            - macOS app (arm64: dmg, zip)
+
+            ### Verification
+            SHA256 checksums are in `SHA256SUMS.txt`.
+          files: |
+            release-assets/*
+            SHA256SUMS.txt
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  gitlab-sync:
+    name: Trigger GitLab sync
+    runs-on: ubuntu-latest
+    needs: [nightly, release]
+    if: always() && (needs.nightly.result == 'success' || needs.release.result == 'success')
+    steps:
+      - name: Determine release tag
+        id: meta
+        run: |
+          if [ "${{ needs.release.result }}" = "success" ]; then
+            echo "release_tag=${{ needs.release.outputs.release_tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "release_tag=${{ needs.nightly.outputs.release_tag }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Trigger GitLab sync pipeline
+        run: |
+          RELEASE_TAG="${{ steps.meta.outputs.release_tag }}"
+          curl -fsSL --max-time 30 --retry 2 -X POST \
+            -F token="${{ secrets.GITLAB_TRIGGER_TOKEN }}" \
+            -F "ref=main" \
+            -F "variables[GITHUB_RUN_ID]=${{ github.run_id }}" \
+            -F "variables[RELEASE_TAG]=${RELEASE_TAG}" \
+            "https://gitlab.com/api/v4/projects/${{ secrets.GITLAB_PROJECT_ID }}/trigger/pipeline"

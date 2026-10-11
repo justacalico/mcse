@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=mcse
+Comment=Minecraft Java Edition server manager
+Exec=/opt/mcse/mcse
+Icon=mcse
+Categories=Game;Utility;
+Terminal=false
+StartupWMClass=mcse

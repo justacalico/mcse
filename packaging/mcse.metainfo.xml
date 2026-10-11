@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>gitlab.httpanimations.mcse</id>
+  <name>mcse</name>
+  <summary>Minecraft Java Edition server manager</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>AGPL-3.0-only</project_license>
+  <description>
+    <p>A desktop Minecraft Java Edition server manager. Create and run
+    Vanilla, Paper, Purpur, Fabric, Forge and NeoForge servers, watch the
+    live console, edit server.properties, manage Java runtimes and keep
+    world backups — all in one binary with an embedded Rust backend.</p>
+  </description>
+  <launchable type="desktop-id">gitlab.httpanimations.mcse.desktop</launchable>
+  <url type="homepage">https://gitlab.com/HttpAnimations/mcse</url>
+  <developer>
+    <name>HttpAnimations</name>
+  </developer>
+  <releases>
+    <release version="@VERSION@" date="2026-01-01"/>
+  </releases>
+  <content_rating type="oars-1.1"/>
+</component>

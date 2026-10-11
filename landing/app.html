@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>mcse — desktop app</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #101711; color: #e8f0e9;
+           display: flex; align-items: center; justify-content: center;
+           min-height: 100vh; margin: 0; text-align: center; }
+    main { max-width: 34rem; padding: 2rem; }
+    img { width: 96px; height: 96px; border-radius: 24px; }
+    h1 { font-size: 2.5rem; margin: 1rem 0 .5rem; }
+    p { color: #a9b8ab; line-height: 1.6; }
+    a.button { display: inline-block; margin: .5rem; padding: .8rem 1.6rem;
+               border-radius: 10px; background: #54b049; color: #0c130d;
+               font-weight: 600; text-decoration: none; }
+    a.ghost { background: transparent; border: 1px solid #54b049; color: #7ee787; }
+  </style>
+</head>
+<body>
+  <main>
+    <img src="../assets/assets/img/icon.png" alt="mcse icon" onerror="this.style.display='none'">
+    <h1>mcse</h1>
+    <p>mcse is a <strong>desktop</strong> application — the Rust backend is
+       embedded in the app, so the server manager runs locally with no
+       browser in between. A web UI can come later on top of the same
+       backend API.</p>
+    <p>
+      <a class="button" href="https://gitlab.com/HttpAnimations/mcse/-/releases">Download for desktop</a>
+      <a class="button ghost" href="../">Back to the landing page</a>
+    </p>
+  </main>
+</body>
+</html>

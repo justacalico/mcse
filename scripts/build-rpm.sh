@@ -47,7 +47,7 @@ cat > "$TOPDIR/SPECS/mcse.spec" <<'EOF'
 Name: mcse
 Version: %{pkg_version}
 Release: %{pkg_release}%{?dist}
-Summary: Mcse desktop client
+Summary: Minecraft Java Edition server manager
 License: AGPL-3.0-only
 URL: https://gitlab.com/HttpAnimations/mcse
 
@@ -60,17 +60,27 @@ URL: https://gitlab.com/HttpAnimations/mcse
 %global __requires_exclude %{requires_exclude}
 
 %description
-A secure, self-hostable Material 3 client for managing Devin work.
+A desktop Minecraft Java Edition server manager. Create and run Vanilla,
+Paper, Purpur, Fabric, Forge and NeoForge servers with a built-in Rust
+backend — one binary.
 
 %install
-mkdir -p %{buildroot}/opt/mcse %{buildroot}/usr/bin
+mkdir -p %{buildroot}/opt/mcse %{buildroot}/usr/bin \
+  %{buildroot}/usr/share/applications \
+  %{buildroot}/usr/share/icons/hicolor/256x256/apps
 cp -a %{bundle_dir}/. %{buildroot}/opt/mcse/
-ln -sf /opt/mcse/mcse_frontend %{buildroot}/usr/bin/mcse
+ln -sf /opt/mcse/mcse %{buildroot}/usr/bin/mcse
+cp %{desktop_file} %{buildroot}/usr/share/applications/mcse.desktop
+cp %{icon_file} %{buildroot}/usr/share/icons/hicolor/256x256/apps/mcse.png
 
 %files
 /opt/mcse
 /usr/bin/mcse
+/usr/share/applications/mcse.desktop
+/usr/share/icons/hicolor/256x256/apps/mcse.png
 EOF
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 rpmbuild -bb \
   --target "$ARCH" \
@@ -78,6 +88,8 @@ rpmbuild -bb \
   --define "pkg_version $RPM_VERSION" \
   --define "pkg_release $RELEASE" \
   --define "bundle_dir $(realpath "$BUNDLE_DIR")" \
+  --define "desktop_file $ROOT/packaging/mcse.desktop" \
+  --define "icon_file $ROOT/packaging/icons/mcse-256.png" \
   --define "requires_exclude $REQUIRES_EXCLUDE" \
   "$TOPDIR/SPECS/mcse.spec"
 
