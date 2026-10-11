@@ -60,13 +60,15 @@ class ServerCard extends StatelessWidget {
                           ? null
                           : () => app.stop(server.id),
                     ),
-                  const SizedBox(width: 8),
-                  IconButton.outlined(
-                    tooltip: 'Restart',
-                    icon: const Icon(Icons.restart_alt),
-                    onPressed:
-                        server.isBusy ? null : () => app.restart(server.id),
-                  ),
+                  if (server.isOnline) ...[
+                    const SizedBox(width: 8),
+                    IconButton.outlined(
+                      tooltip: 'Restart',
+                      icon: const Icon(Icons.restart_alt),
+                      onPressed:
+                          server.isBusy ? null : () => app.restart(server.id),
+                    ),
+                  ],
                 ],
               ),
             ],
