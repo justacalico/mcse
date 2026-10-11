@@ -2,6 +2,16 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.1.1 - 2026-10-11
+#### Bug Fixes
+- Flatpak 桌面文件图标名与组件 ID 对齐 - (54c01be) - HttpAnimations
+- Flatpak 使用用户级安装 - (444153f) - HttpAnimations
+- 在 rust 目录执行 cargo fmt 检查 - (b56fa49) - HttpAnimations
+- 修复 rustfmt 与 clippy 告警并排除外部代码分析 - (eaa1080) - HttpAnimations
+- 修正 github-sync 推送引用 - (ba76ed2) - HttpAnimations
+
+- - -
+
 ## v0.1.0 - 2026-10-11
 #### Features
 - 项目元数据、应用图标与 Flutter Web 落地页 - (7a72143) - HttpAnimations
