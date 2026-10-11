@@ -86,7 +86,15 @@ class JavaRuntimeInfo {
   final String path;
   final String version;
   final int major;
-  const JavaRuntimeInfo(this.path, this.version, this.major);
+  final bool managed;
+  const JavaRuntimeInfo(this.path, this.version, this.major,
+      {this.managed = false});
+}
+
+class JavaReleaseInfo {
+  final int feature;
+  final bool lts;
+  const JavaReleaseInfo(this.feature, this.lts);
 }
 
 class BackupInfo {
@@ -123,7 +131,7 @@ class CreateRequest {
   });
 }
 
-enum EventKind { status, log, download, created, backup, install, error }
+enum EventKind { status, log, download, created, backup, install, java, error }
 
 class BackendEvent {
   final EventKind kind;
@@ -134,6 +142,8 @@ class BackendEvent {
   final int? total;
   final String? name;
   final String? message;
+  final int? feature;
+  final String? stage;
 
   const BackendEvent(
     this.kind, {
@@ -144,6 +154,8 @@ class BackendEvent {
     this.total,
     this.name,
     this.message,
+    this.feature,
+    this.stage,
   });
 }
 
@@ -186,7 +198,9 @@ abstract class Backend {
   Future<void> restoreBackup(String id, String name);
 
   Future<List<JavaRuntimeInfo>> javaRuntimes();
+  Future<List<JavaReleaseInfo>> javaReleases();
   Future<JavaRuntimeInfo> installJava(int feature);
+  Future<void> removeJava(int feature);
   Future<int> requiredJava(String gameVersion);
 
   Future<String> dataDir();

@@ -7,7 +7,7 @@ use crate::store::Store;
 use crate::{backup, java, paths, ping, props, Error, Result};
 use std::collections::BTreeMap;
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::{broadcast, RwLock};
@@ -466,11 +466,44 @@ impl Manager {
         java::detect_runtimes(&self.data_dir).await
     }
 
+    pub async fn java_releases(&self) -> Result<Vec<JavaRelease>> {
+        java::available_releases(&self.http).await
+    }
+
     pub async fn install_java(&self, feature: u32) -> Result<JavaRuntime> {
-        java::install_temurin(&self.http, &self.data_dir, feature, |line| {
-            tracing::info!(line);
-        })
-        .await
+        let send = |stage: &str, received: u64, total: Option<u64>| {
+            let _ = self.events.send(Event::JavaInstall {
+                feature,
+                stage: stage.to_string(),
+                received,
+                total,
+            });
+        };
+        let rt = java::install_temurin(
+            &self.http,
+            &self.data_dir,
+            feature,
+            |received, total| send("download", received, total),
+            |stage| send(stage, 0, None),
+        )
+        .await?;
+        send("installed", 0, None);
+        Ok(rt)
+    }
+
+    pub async fn remove_java(&self, feature: u32) -> Result<()> {
+        let removed = java::remove_managed(&self.data_dir, feature).await?;
+        // Instances pinned to a java under the removed dir fall back to
+        // auto-detect instead of failing to launch.
+        let mut store = self.store.write().await;
+        for inst in store.instances.values_mut() {
+            if let Some(p) = &inst.java_path {
+                if Path::new(p).starts_with(&removed) {
+                    inst.java_path = None;
+                }
+            }
+        }
+        store.save()
     }
 
     pub async fn set_java(&self, id: Uuid, java_path: Option<String>) -> Result<()> {

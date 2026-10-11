@@ -114,8 +114,14 @@ Future<void> restoreBackup({required String id, required String name}) =>
 Future<List<JavaRuntimeDto>> javaRuntimes() =>
     McseBridge.instance.api.crateApiJavaRuntimes();
 
+Future<List<JavaReleaseDto>> javaReleases() =>
+    McseBridge.instance.api.crateApiJavaReleases();
+
 Future<JavaRuntimeDto> installJava({required int feature}) =>
     McseBridge.instance.api.crateApiInstallJava(feature: feature);
+
+Future<void> removeJava({required int feature}) =>
+    McseBridge.instance.api.crateApiRemoveJava(feature: feature);
 
 Future<int> requiredJava({required String gameVersion}) =>
     McseBridge.instance.api.crateApiRequiredJava(gameVersion: gameVersion);
@@ -153,6 +159,8 @@ class EventDto {
   final BigInt? total;
   final String? name;
   final String? message;
+  final int? feature;
+  final String? stage;
 
   const EventDto({
     required this.kind,
@@ -163,6 +171,8 @@ class EventDto {
     this.total,
     this.name,
     this.message,
+    this.feature,
+    this.stage,
   });
 
   @override
@@ -174,7 +184,9 @@ class EventDto {
       received.hashCode ^
       total.hashCode ^
       name.hashCode ^
-      message.hashCode;
+      message.hashCode ^
+      feature.hashCode ^
+      stage.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -188,7 +200,9 @@ class EventDto {
           received == other.received &&
           total == other.total &&
           name == other.name &&
-          message == other.message;
+          message == other.message &&
+          feature == other.feature &&
+          stage == other.stage;
 }
 
 class GameVersionDto {
@@ -275,19 +289,43 @@ class InstanceDto {
           createdAt == other.createdAt;
 }
 
+class JavaReleaseDto {
+  final int feature;
+  final bool lts;
+
+  const JavaReleaseDto({
+    required this.feature,
+    required this.lts,
+  });
+
+  @override
+  int get hashCode => feature.hashCode ^ lts.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is JavaReleaseDto &&
+          runtimeType == other.runtimeType &&
+          feature == other.feature &&
+          lts == other.lts;
+}
+
 class JavaRuntimeDto {
   final String path;
   final String version;
   final int major;
+  final bool managed;
 
   const JavaRuntimeDto({
     required this.path,
     required this.version,
     required this.major,
+    required this.managed,
   });
 
   @override
-  int get hashCode => path.hashCode ^ version.hashCode ^ major.hashCode;
+  int get hashCode =>
+      path.hashCode ^ version.hashCode ^ major.hashCode ^ managed.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -296,7 +334,8 @@ class JavaRuntimeDto {
           runtimeType == other.runtimeType &&
           path == other.path &&
           version == other.version &&
-          major == other.major;
+          major == other.major &&
+          managed == other.managed;
 }
 
 class LoaderDto {

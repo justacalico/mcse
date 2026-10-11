@@ -52,6 +52,8 @@ pub fn router(manager: Arc<Manager>, web_dir: Option<PathBuf>, cors_permissive: 
             post(restore_backup),
         )
         .route("/java", get(java_runtimes).post(install_java))
+        .route("/java/releases", get(java_releases))
+        .route("/java/{feature}", delete(remove_java))
         .route("/ws", get(ws))
         .with_state(state);
     let app = Router::new().nest("/api", api);
@@ -271,6 +273,14 @@ async fn restore_backup(
 
 async fn java_runtimes(State(s): State<AppState>) -> impl IntoResponse {
     Json(s.manager.runtimes().await)
+}
+
+async fn java_releases(State(s): State<AppState>) -> impl IntoResponse {
+    respond(s.manager.java_releases().await)
+}
+
+async fn remove_java(State(s): State<AppState>, Path(feature): Path<u32>) -> impl IntoResponse {
+    respond_unit(s.manager.remove_java(feature).await)
 }
 
 #[derive(Deserialize)]

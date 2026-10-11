@@ -69,7 +69,7 @@ class McseBridge
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => -696056010;
+  int get rustContentHash => -1791022446;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -109,6 +109,8 @@ abstract class McseBridgeApi extends BaseApi {
 
   Future<JavaRuntimeDto> crateApiInstallJava({required int feature});
 
+  Future<List<JavaReleaseDto>> crateApiJavaReleases();
+
   Future<List<JavaRuntimeDto>> crateApiJavaRuntimes();
 
   Future<void> crateApiKillInstance({required String id});
@@ -122,6 +124,8 @@ abstract class McseBridgeApi extends BaseApi {
   Future<PingDto> crateApiPingInstance({required String id});
 
   Future<List<String>> crateApiRecentLog({required String id});
+
+  Future<void> crateApiRemoveJava({required int feature});
 
   Future<int> crateApiRequiredJava({required String gameVersion});
 
@@ -433,12 +437,35 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
       );
 
   @override
-  Future<List<JavaRuntimeDto>> crateApiJavaRuntimes() {
+  Future<List<JavaReleaseDto>> crateApiJavaReleases() {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 11, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_java_release_dto,
+        decodeErrorData: sse_decode_AnyhowException,
+      ),
+      constMeta: kCrateApiJavaReleasesConstMeta,
+      argValues: [],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiJavaReleasesConstMeta => const TaskConstMeta(
+        debugName: "java_releases",
+        argNames: [],
+      );
+
+  @override
+  Future<List<JavaRuntimeDto>> crateApiJavaRuntimes() {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 12, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_list_java_runtime_dto,
@@ -462,7 +489,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(id, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 12, port: port_);
+            funcId: 13, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -486,7 +513,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(id, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 13, port: port_);
+            funcId: 14, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_list_backup_dto,
@@ -509,7 +536,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 14, port: port_);
+            funcId: 15, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_list_instance_dto,
@@ -532,7 +559,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 15, port: port_);
+            funcId: 16, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_list_loader_dto,
@@ -556,7 +583,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(id, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 16, port: port_);
+            funcId: 17, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_ping_dto,
@@ -580,7 +607,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(id, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 17, port: port_);
+            funcId: 18, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_list_String,
@@ -598,13 +625,37 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
       );
 
   @override
+  Future<void> crateApiRemoveJava({required int feature}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_u_32(feature, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 19, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: sse_decode_AnyhowException,
+      ),
+      constMeta: kCrateApiRemoveJavaConstMeta,
+      argValues: [feature],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiRemoveJavaConstMeta => const TaskConstMeta(
+        debugName: "remove_java",
+        argNames: ["feature"],
+      );
+
+  @override
   Future<int> crateApiRequiredJava({required String gameVersion}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(gameVersion, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 18, port: port_);
+            funcId: 20, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_u_32,
@@ -628,7 +679,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(id, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 19, port: port_);
+            funcId: 21, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -654,7 +705,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         sse_encode_String(id, serializer);
         sse_encode_String(name, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 20, port: port_);
+            funcId: 22, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -680,7 +731,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         sse_encode_String(id, serializer);
         sse_encode_String(command, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 21, port: port_);
+            funcId: 23, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -705,7 +756,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         sse_encode_String(id, serializer);
         sse_encode_opt_String(path, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 22, port: port_);
+            funcId: 24, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -731,7 +782,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         sse_encode_String(id, serializer);
         sse_encode_Map_String_String_None(changes, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 23, port: port_);
+            funcId: 25, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -755,7 +806,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(id, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 24, port: port_);
+            funcId: 26, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -779,7 +830,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(id, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 25, port: port_);
+            funcId: 27, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -804,7 +855,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_StreamSink_event_dto_Sse(sink, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 26, port: port_);
+            funcId: 28, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -838,7 +889,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         sse_encode_opt_box_autoadd_u_32(maxRamMb, serializer);
         sse_encode_opt_list_String(jvmArgs, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 27, port: port_);
+            funcId: 29, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -915,8 +966,8 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
   EventDto dco_decode_event_dto(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 8)
-      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    if (arr.length != 10)
+      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
     return EventDto(
       kind: dco_decode_String(arr[0]),
       id: dco_decode_opt_String(arr[1]),
@@ -926,6 +977,8 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
       total: dco_decode_opt_box_autoadd_u_64(arr[5]),
       name: dco_decode_opt_String(arr[6]),
       message: dco_decode_opt_String(arr[7]),
+      feature: dco_decode_opt_box_autoadd_u_32(arr[8]),
+      stage: dco_decode_opt_String(arr[9]),
     );
   }
 
@@ -970,15 +1023,28 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
   }
 
   @protected
+  JavaReleaseDto dco_decode_java_release_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return JavaReleaseDto(
+      feature: dco_decode_u_32(arr[0]),
+      lts: dco_decode_bool(arr[1]),
+    );
+  }
+
+  @protected
   JavaRuntimeDto dco_decode_java_runtime_dto(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 3)
-      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
     return JavaRuntimeDto(
       path: dco_decode_String(arr[0]),
       version: dco_decode_String(arr[1]),
       major: dco_decode_u_32(arr[2]),
+      managed: dco_decode_bool(arr[3]),
     );
   }
 
@@ -1004,6 +1070,12 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
   List<InstanceDto> dco_decode_list_instance_dto(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_instance_dto).toList();
+  }
+
+  @protected
+  List<JavaReleaseDto> dco_decode_list_java_release_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_java_release_dto).toList();
   }
 
   @protected
@@ -1186,6 +1258,8 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
     var var_total = sse_decode_opt_box_autoadd_u_64(deserializer);
     var var_name = sse_decode_opt_String(deserializer);
     var var_message = sse_decode_opt_String(deserializer);
+    var var_feature = sse_decode_opt_box_autoadd_u_32(deserializer);
+    var var_stage = sse_decode_opt_String(deserializer);
     return EventDto(
         kind: var_kind,
         id: var_id,
@@ -1194,7 +1268,9 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         received: var_received,
         total: var_total,
         name: var_name,
-        message: var_message);
+        message: var_message,
+        feature: var_feature,
+        stage: var_stage);
   }
 
   @protected
@@ -1242,13 +1318,25 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
   }
 
   @protected
+  JavaReleaseDto sse_decode_java_release_dto(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_feature = sse_decode_u_32(deserializer);
+    var var_lts = sse_decode_bool(deserializer);
+    return JavaReleaseDto(feature: var_feature, lts: var_lts);
+  }
+
+  @protected
   JavaRuntimeDto sse_decode_java_runtime_dto(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_path = sse_decode_String(deserializer);
     var var_version = sse_decode_String(deserializer);
     var var_major = sse_decode_u_32(deserializer);
+    var var_managed = sse_decode_bool(deserializer);
     return JavaRuntimeDto(
-        path: var_path, version: var_version, major: var_major);
+        path: var_path,
+        version: var_version,
+        major: var_major,
+        managed: var_managed);
   }
 
   @protected
@@ -1296,6 +1384,19 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
     var ans_ = <InstanceDto>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_instance_dto(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<JavaReleaseDto> sse_decode_list_java_release_dto(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <JavaReleaseDto>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_java_release_dto(deserializer));
     }
     return ans_;
   }
@@ -1522,6 +1623,8 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
     sse_encode_opt_box_autoadd_u_64(self.total, serializer);
     sse_encode_opt_String(self.name, serializer);
     sse_encode_opt_String(self.message, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.feature, serializer);
+    sse_encode_opt_String(self.stage, serializer);
   }
 
   @protected
@@ -1556,12 +1659,21 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
   }
 
   @protected
+  void sse_encode_java_release_dto(
+      JavaReleaseDto self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self.feature, serializer);
+    sse_encode_bool(self.lts, serializer);
+  }
+
+  @protected
   void sse_encode_java_runtime_dto(
       JavaRuntimeDto self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.path, serializer);
     sse_encode_String(self.version, serializer);
     sse_encode_u_32(self.major, serializer);
+    sse_encode_bool(self.managed, serializer);
   }
 
   @protected
@@ -1600,6 +1712,16 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_instance_dto(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_java_release_dto(
+      List<JavaReleaseDto> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_java_release_dto(item, serializer);
     }
   }
 

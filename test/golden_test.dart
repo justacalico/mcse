@@ -93,6 +93,27 @@ void main() {
         matchesGoldenFile('goldens/settings.png'));
   });
 
+  testWidgets('java manager page', (tester) async {
+    final backend = FakeBackend()
+      ..runtimesResult = const [
+        JavaRuntimeInfo(
+            '/data/mcse/runtimes/temurin-21/bin/java', '21.0.5', 21,
+            managed: true),
+        JavaRuntimeInfo('/usr/bin/java', '25.0.1', 25),
+      ];
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(testApp(backend));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Java runtimes'));
+    await tester.pumpAndSettle();
+    await expectLater(find.byType(MaterialApp),
+        matchesGoldenFile('goldens/java.png'));
+  });
+
   testWidgets('about page', (tester) async {
     await snap(
         tester,

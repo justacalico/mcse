@@ -27,6 +27,18 @@ class CreateProgress {
       total != null && total! > 0 ? received / total! : null;
 }
 
+/// Progress of an in-flight java runtime download, keyed by feature version.
+class JavaProgress {
+  final String stage;
+  final int received;
+  final int? total;
+
+  const JavaProgress({this.stage = 'download', this.received = 0, this.total});
+
+  double? get fraction =>
+      total != null && total! > 0 ? received / total! : null;
+}
+
 class AppState extends ChangeNotifier {
   final Backend backend;
   late final StreamSubscription<BackendEvent> _sub;
@@ -34,6 +46,7 @@ class AppState extends ChangeNotifier {
   List<ServerInstance> instances = [];
   final Map<String, List<String>> logs = {};
   final Map<String, CreateProgress> creating = {};
+  final Map<int, JavaProgress> javaDownloads = {};
   String? lastError;
 
   AppState(this.backend) {
@@ -102,6 +115,19 @@ class AppState extends ChangeNotifier {
         refresh();
       case EventKind.backup:
         notifyListeners();
+      case EventKind.java:
+        final feature = e.feature;
+        if (feature == null) return;
+        if (e.stage == 'installed') {
+          javaDownloads.remove(feature);
+        } else {
+          javaDownloads[feature] = JavaProgress(
+            stage: e.stage ?? 'download',
+            received: e.received ?? 0,
+            total: e.total,
+          );
+        }
+        notifyListeners();
       case EventKind.error:
         if (e.id != null && creating.containsKey(e.id)) {
           creating[e.id!] = CreateProgress(
@@ -136,6 +162,13 @@ class AppState extends ChangeNotifier {
 
   void dismissCreate(String id) {
     creating.remove(id);
+    notifyListeners();
+  }
+
+  /// Clear a java download entry when the install call settles — covers
+  /// failures, which never produce an 'installed' event.
+  void finishJavaDownload(int feature) {
+    javaDownloads.remove(feature);
     notifyListeners();
   }
 
