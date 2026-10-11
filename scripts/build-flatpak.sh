@@ -29,7 +29,8 @@ flatpak install --user -y --noninteractive flathub \
 mkdir -p "$WORK/src"
 cp -r "$BUNDLE_DIR/." "$WORK/src/"
 cp "$ROOT/packaging/mcse.desktop" "$WORK/src/$APPID.desktop"
-sed -i 's|^Exec=.*|Exec=mcse|' "$WORK/src/$APPID.desktop"
+sed -i "s|^Exec=.*|Exec=mcse|; s|^Icon=.*|Icon=$APPID|" \
+  "$WORK/src/$APPID.desktop"
 cp "$ROOT/packaging/icons/mcse-256.png" "$WORK/src/$APPID.png"
 cp "$ROOT/packaging/mcse.metainfo.xml" "$WORK/src/$APPID.metainfo.xml"
 sed "s/@APPID@/$APPID/g; s/@VERSION@/$VERSION/g" \
