@@ -23,9 +23,13 @@ class _SettingsPageState extends State<SettingsPage> {
     final backend = context.read<AppState>().backend;
     backend.javaRuntimes().then((r) {
       if (mounted) setState(() => _runtimes = r);
+    }).catchError((_) {
+      if (mounted) setState(() => _runtimes = const []);
     });
     backend.dataDir().then((d) {
       if (mounted) setState(() => _dataDir = d);
+    }).catchError((_) {
+      if (mounted) setState(() => _dataDir = '?');
     });
   }
 

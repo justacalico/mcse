@@ -159,12 +159,69 @@ void main() {
         isEmpty);
   });
 
+  testWidgets('properties load and save errors surface', (tester) async {
+    final backend = FakeBackend()
+      ..callErrors['props:srv-1'] = Exception('io error');
+    await openDetail(tester, backend);
+    await tester.tap(find.text('Properties'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Failed to load properties'), findsOneWidget);
+  });
+
+  testWidgets('properties save failure shows snackbar', (tester) async {
+    final backend = FakeBackend();
+    await openDetail(tester, backend);
+    await tester.tap(find.text('Properties'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+        find.widgetWithText(TextField, 'server-port'), '1');
+    backend.callErrors['setProps:srv-1:{server-port: 1}'] =
+        Exception('write fail');
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Save failed'), findsOneWidget);
+  });
+
   testWidgets('backups empty state', (tester) async {
     final backend = FakeBackend()..backupsResult = [];
     await openDetail(tester, backend);
     await tester.tap(find.text('Backups'));
     await tester.pumpAndSettle();
     expect(find.text('No backups yet.'), findsOneWidget);
+  });
+
+  testWidgets('backups load error', (tester) async {
+    final backend = FakeBackend()
+      ..callErrors['backups:srv-1'] = Exception('zip read fail');
+    await openDetail(tester, backend);
+    await tester.tap(find.text('Backups'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Failed to load backups'), findsOneWidget);
+  });
+
+  testWidgets('backups action errors show snackbar', (tester) async {
+    final backend = FakeBackend()
+      ..callErrors['createBackup:srv-1'] = Exception('no space');
+    await openDetail(tester, backend);
+    await tester.tap(find.text('Backups'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Create backup'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Backup failed'), findsOneWidget);
+
+    backend.callErrors['delBackup:srv-1:backup-1.zip'] =
+        Exception('locked');
+    await tester.tap(find.byTooltip('Delete'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Backup failed'), findsWidgets);
+
+    backend.callErrors['restoreBackup:srv-1:backup-1.zip'] =
+        Exception('corrupt');
+    await tester.tap(find.byTooltip('Restore'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Restore'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Backup failed'), findsWidgets);
   });
 
   testWidgets('settings tab: fields + java dropdown + save',
@@ -190,6 +247,27 @@ void main() {
     await tester.pumpAndSettle();
     expect(backend.calls, contains('update:srv-1'));
     expect(find.text('Settings saved'), findsOneWidget);
+  });
+
+  testWidgets('settings tab runtimes failure shows empty dropdown',
+      (tester) async {
+    final backend = FakeBackend()
+      ..callErrors['runtimes'] = Exception('no jdk');
+    await openDetail(tester, backend);
+    await tester.tap(find.text('Settings'));
+    await tester.pumpAndSettle();
+    expect(find.text('Auto (best match)'), findsOneWidget);
+  });
+
+  testWidgets('settings tab save failure shows snackbar', (tester) async {
+    final backend = FakeBackend();
+    await openDetail(tester, backend);
+    await tester.tap(find.text('Settings'));
+    await tester.pumpAndSettle();
+    backend.callErrors['update:srv-1'] = Exception('denied');
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Save failed'), findsOneWidget);
   });
 
   testWidgets('delete server dialog', (tester) async {

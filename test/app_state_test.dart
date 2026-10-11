@@ -111,6 +111,13 @@ void main() {
     expect(state.logOf('srv-1'), ['[12:00:00] server started']);
   });
 
+  test('loadRecentLog failure records lastError', () async {
+    backend.error = Exception('no log');
+    await state.loadRecentLog('srv-1');
+    expect(state.lastError, contains('no log'));
+    expect(state.logOf('srv-1'), isEmpty);
+  });
+
   test('actions delegate to backend', () async {
     await state.start('a');
     await state.stop('a');

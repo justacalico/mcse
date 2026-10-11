@@ -218,6 +218,7 @@ class _PropertiesTabState extends State<PropertiesTab> {
   Map<String, String>? _props;
   final Map<String, TextEditingController> _controllers = {};
   bool _saving = false;
+  String? _error;
 
   static const _fields = [
     'server-port',
@@ -249,6 +250,8 @@ class _PropertiesTabState extends State<PropertiesTab> {
           _controllers[e.key] = TextEditingController(text: e.value);
         }
       });
+    }).catchError((Object e) {
+      if (mounted) setState(() => _error = e.toString());
     });
   }
 
@@ -277,6 +280,12 @@ class _PropertiesTabState extends State<PropertiesTab> {
           const SnackBar(content: Text('Properties saved')),
         );
       }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Save failed: $e')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -284,6 +293,9 @@ class _PropertiesTabState extends State<PropertiesTab> {
 
   @override
   Widget build(BuildContext context) {
+    if (_error != null) {
+      return Center(child: Text('Failed to load properties: $_error'));
+    }
     if (_props == null) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -338,6 +350,7 @@ class BackupsTab extends StatefulWidget {
 class _BackupsTabState extends State<BackupsTab> {
   List<BackupInfo>? _backups;
   bool _busy = false;
+  String? _error;
 
   @override
   void initState() {
@@ -346,24 +359,43 @@ class _BackupsTabState extends State<BackupsTab> {
   }
 
   Future<void> _load() async {
-    final list =
-        await context.read<AppState>().backend.backups(widget.serverId);
-    if (mounted) setState(() => _backups = list);
+    try {
+      final list =
+          await context.read<AppState>().backend.backups(widget.serverId);
+      if (mounted) setState(() => _backups = list);
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString());
+    }
+  }
+
+  void _showError(Object e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Backup failed: $e')),
+    );
   }
 
   Future<void> _create() async {
     setState(() => _busy = true);
     try {
       await context.read<AppState>().backend.createBackup(widget.serverId);
-    } finally {
       await _load();
+    } catch (e) {
+      if (mounted) _showError(e);
+    } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<void> _delete(BackupInfo b) async {
-    await context.read<AppState>().backend.deleteBackup(widget.serverId, b.name);
-    await _load();
+    try {
+      await context
+          .read<AppState>()
+          .backend
+          .deleteBackup(widget.serverId, b.name);
+      await _load();
+    } catch (e) {
+      if (mounted) _showError(e);
+    }
   }
 
   Future<void> _restore(BackupInfo b) async {
@@ -390,6 +422,8 @@ class _BackupsTabState extends State<BackupsTab> {
     setState(() => _busy = true);
     try {
       await backend.restoreBackup(widget.serverId, b.name);
+    } catch (e) {
+      if (mounted) _showError(e);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -397,6 +431,9 @@ class _BackupsTabState extends State<BackupsTab> {
 
   @override
   Widget build(BuildContext context) {
+    if (_error != null && _backups == null) {
+      return Center(child: Text('Failed to load backups: $_error'));
+    }
     if (_backups == null) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -475,6 +512,8 @@ class _ServerSettingsTabState extends State<ServerSettingsTab> {
     _javaPath = s.javaPath;
     context.read<AppState>().backend.javaRuntimes().then((rts) {
       if (mounted) setState(() => _runtimes = rts);
+    }).catchError((_) {
+      if (mounted) setState(() => _runtimes = const []);
     });
   }
 
@@ -509,6 +548,12 @@ class _ServerSettingsTabState extends State<ServerSettingsTab> {
             const SnackBar(content: Text('Settings saved')),
           );
         }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Save failed: $e')),
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);

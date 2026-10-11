@@ -53,4 +53,13 @@ void main() {
     await openSettings(tester, backend);
     expect(find.text('/data/mcse'), findsOneWidget);
   });
+
+  testWidgets('load failures fall back to empty states', (tester) async {
+    final backend = FakeBackend()
+      ..callErrors['runtimes'] = Exception('scan fail')
+      ..callErrors['dataDir'] = Exception('no dir');
+    await openSettings(tester, backend);
+    expect(find.text('No Java runtimes found.'), findsOneWidget);
+    expect(find.text('?'), findsOneWidget);
+  });
 }

@@ -31,6 +31,8 @@ class _CreatePageState extends State<CreatePage> {
     super.initState();
     context.read<AppState>().backend.loaders().then((l) {
       if (mounted) setState(() => _loaders = l);
+    }).catchError((Object e) {
+      if (mounted) setState(() => _error = e.toString());
     });
   }
 
@@ -48,10 +50,19 @@ class _CreatePageState extends State<CreatePage> {
       _version = null;
       _versions = null;
     });
-    final versions =
-        await context.read<AppState>().backend.gameVersions(kind);
-    if (mounted && _loader == kind) {
-      setState(() => _versions = versions);
+    try {
+      final versions =
+          await context.read<AppState>().backend.gameVersions(kind);
+      if (mounted && _loader == kind) {
+        setState(() => _versions = versions);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _versions = const [];
+          _error = e.toString();
+        });
+      }
     }
   }
 
@@ -99,7 +110,11 @@ class _CreatePageState extends State<CreatePage> {
           Text('Loader', style: Theme.of(context).textTheme.titleSmall),
           const SizedBox(height: 8),
           if (_loaders == null)
-            const Center(child: CircularProgressIndicator())
+            _error == null
+                ? const Center(child: CircularProgressIndicator())
+                : Text('Failed to load loaders: $_error',
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.error))
           else
             Wrap(
               spacing: 8,

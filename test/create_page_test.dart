@@ -116,6 +116,27 @@ void main() {
     expect(find.byType(CircularProgressIndicator), findsNothing);
   });
 
+  testWidgets('loaders and versions failures show error', (tester) async {
+    final backend = FakeBackend()
+      ..callErrors['gameVersions:paper'] = Exception('offline');
+    await openCreate(tester, backend);
+    await tester.tap(find.text('Paper'));
+    await tester.pumpAndSettle();
+    await scrollTo(tester, find.textContaining('offline'));
+    expect(find.textContaining('offline'), findsOneWidget);
+  });
+
+  testWidgets('loaders failure shows error', (tester) async {
+    final backend = FakeBackend()
+      ..callErrors['loaders'] = Exception('api down');
+    await tester.pumpWidget(testApp(backend));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+    await scrollTo(tester, find.textContaining('api down'));
+    expect(find.textContaining('api down'), findsOneWidget);
+  });
+
   testWidgets('requires eula and version before create', (tester) async {
     final backend = FakeBackend();
     await openCreate(tester, backend);

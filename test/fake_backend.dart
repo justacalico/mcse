@@ -27,6 +27,7 @@ class FakeBackend implements Backend {
   String dataDirResult = '/data/mcse';
   int requiredJavaResult = 21;
   Object? error;
+  final Map<String, Object> callErrors = {};
   Duration? delay;
 
   final List<String> calls = [];
@@ -36,7 +37,8 @@ class FakeBackend implements Backend {
   Future<T> _maybe<T>(String name, T value) async {
     calls.add(name);
     if (delay != null) await Future.delayed(delay!);
-    if (error != null) throw error!;
+    final e = callErrors[name] ?? error;
+    if (e != null) throw e;
     return value;
   }
 
