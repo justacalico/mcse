@@ -163,7 +163,7 @@ pages:
     - flutter config --no-analytics
     - flutter precache --web
   script:
-    - cd landing && flutter pub get && flutter build web --release --base-href "/mcse/"
+    - cd landing && flutter pub get && flutter build web --release --base-href "/"
     - cd .. && mkdir -p public/app
     - cp -r landing/build/web/. public/
     - cp landing/app.html public/app/index.html
