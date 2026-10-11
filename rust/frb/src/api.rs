@@ -85,6 +85,12 @@ pub struct JavaRuntimeDto {
     pub path: String,
     pub version: String,
     pub major: u32,
+    pub managed: bool,
+}
+
+pub struct JavaReleaseDto {
+    pub feature: u32,
+    pub lts: bool,
 }
 
 pub struct BackupDto {
@@ -115,6 +121,8 @@ pub struct EventDto {
     pub total: Option<u64>,
     pub name: Option<String>,
     pub message: Option<String>,
+    pub feature: Option<u32>,
+    pub stage: Option<String>,
 }
 
 fn event_dto(e: &Event) -> EventDto {
@@ -127,6 +135,8 @@ fn event_dto(e: &Event) -> EventDto {
         total: None,
         name: None,
         message: None,
+        feature: None,
+        stage: None,
     };
     match e {
         Event::StatusChanged { id, status } => {
@@ -162,6 +172,18 @@ fn event_dto(e: &Event) -> EventDto {
             dto.kind = "install".into();
             dto.id = Some(id.to_string());
             dto.line = Some(line.clone());
+        }
+        Event::JavaInstall {
+            feature,
+            stage,
+            received,
+            total,
+        } => {
+            dto.kind = "java".into();
+            dto.feature = Some(*feature);
+            dto.stage = Some(stage.clone());
+            dto.received = Some(*received);
+            dto.total = *total;
         }
         Event::Fatal { id, message } => {
             dto.kind = "error".into();
@@ -402,8 +424,20 @@ pub fn java_runtimes() -> Vec<JavaRuntimeDto> {
             path: r.path.to_string_lossy().to_string(),
             version: r.version,
             major: r.major,
+            managed: r.managed,
         })
         .collect()
+}
+
+pub fn java_releases() -> Result<Vec<JavaReleaseDto>, anyhow::Error> {
+    Ok(rt()
+        .block_on(mgr().java_releases())?
+        .into_iter()
+        .map(|r| JavaReleaseDto {
+            feature: r.feature,
+            lts: r.lts,
+        })
+        .collect())
 }
 
 pub fn install_java(feature: u32) -> Result<JavaRuntimeDto, anyhow::Error> {
@@ -412,7 +446,12 @@ pub fn install_java(feature: u32) -> Result<JavaRuntimeDto, anyhow::Error> {
         path: r.path.to_string_lossy().to_string(),
         version: r.version,
         major: r.major,
+        managed: r.managed,
     })
+}
+
+pub fn remove_java(feature: u32) -> Result<(), anyhow::Error> {
+    Ok(rt().block_on(mgr().remove_java(feature))?)
 }
 
 pub fn required_java(game_version: String) -> u32 {

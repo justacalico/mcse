@@ -55,6 +55,9 @@ abstract class McseBridgeApiImplPlatform extends BaseApiImpl<McseBridgeWire> {
   InstanceDto dco_decode_instance_dto(dynamic raw);
 
   @protected
+  JavaReleaseDto dco_decode_java_release_dto(dynamic raw);
+
+  @protected
   JavaRuntimeDto dco_decode_java_runtime_dto(dynamic raw);
 
   @protected
@@ -68,6 +71,9 @@ abstract class McseBridgeApiImplPlatform extends BaseApiImpl<McseBridgeWire> {
 
   @protected
   List<InstanceDto> dco_decode_list_instance_dto(dynamic raw);
+
+  @protected
+  List<JavaReleaseDto> dco_decode_list_java_release_dto(dynamic raw);
 
   @protected
   List<JavaRuntimeDto> dco_decode_list_java_runtime_dto(dynamic raw);
@@ -153,6 +159,9 @@ abstract class McseBridgeApiImplPlatform extends BaseApiImpl<McseBridgeWire> {
   InstanceDto sse_decode_instance_dto(SseDeserializer deserializer);
 
   @protected
+  JavaReleaseDto sse_decode_java_release_dto(SseDeserializer deserializer);
+
+  @protected
   JavaRuntimeDto sse_decode_java_runtime_dto(SseDeserializer deserializer);
 
   @protected
@@ -167,6 +176,10 @@ abstract class McseBridgeApiImplPlatform extends BaseApiImpl<McseBridgeWire> {
 
   @protected
   List<InstanceDto> sse_decode_list_instance_dto(SseDeserializer deserializer);
+
+  @protected
+  List<JavaReleaseDto> sse_decode_list_java_release_dto(
+      SseDeserializer deserializer);
 
   @protected
   List<JavaRuntimeDto> sse_decode_list_java_runtime_dto(
@@ -260,6 +273,10 @@ abstract class McseBridgeApiImplPlatform extends BaseApiImpl<McseBridgeWire> {
   void sse_encode_instance_dto(InstanceDto self, SseSerializer serializer);
 
   @protected
+  void sse_encode_java_release_dto(
+      JavaReleaseDto self, SseSerializer serializer);
+
+  @protected
   void sse_encode_java_runtime_dto(
       JavaRuntimeDto self, SseSerializer serializer);
 
@@ -277,6 +294,10 @@ abstract class McseBridgeApiImplPlatform extends BaseApiImpl<McseBridgeWire> {
   @protected
   void sse_encode_list_instance_dto(
       List<InstanceDto> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_java_release_dto(
+      List<JavaReleaseDto> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_java_runtime_dto(

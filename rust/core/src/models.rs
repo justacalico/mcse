@@ -110,6 +110,16 @@ pub struct JavaRuntime {
     pub path: PathBuf,
     pub version: String,
     pub major: u32,
+    /// True when the runtime lives under the managed runtimes dir and was
+    /// installed by mcse (so it can be removed again).
+    pub managed: bool,
+}
+
+/// A Java feature release the Adoptium API offers for download.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct JavaRelease {
+    pub feature: u32,
+    pub lts: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -156,6 +166,12 @@ pub enum Event {
     InstallProgress {
         id: Uuid,
         line: String,
+    },
+    JavaInstall {
+        feature: u32,
+        stage: String,
+        received: u64,
+        total: Option<u64>,
     },
     Fatal {
         id: Option<Uuid>,

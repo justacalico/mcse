@@ -24,6 +24,12 @@ class FakeBackend implements Backend {
   List<JavaRuntimeInfo> runtimesResult = const [
     JavaRuntimeInfo('/usr/bin/java', '21.0.3', 21),
   ];
+  List<JavaReleaseInfo> releasesResult = const [
+    JavaReleaseInfo(25, true),
+    JavaReleaseInfo(21, true),
+    JavaReleaseInfo(17, true),
+    JavaReleaseInfo(8, true),
+  ];
   String dataDirResult = '/data/mcse';
   int requiredJavaResult = 21;
   Object? error;
@@ -112,9 +118,16 @@ class FakeBackend implements Backend {
   Future<List<JavaRuntimeInfo>> javaRuntimes() =>
       _maybe('runtimes', runtimesResult);
   @override
-  Future<JavaRuntimeInfo> installJava(int feature) =>
-      _maybe('installJava:$feature',
-          JavaRuntimeInfo('/data/jre$feature', '17.0.1', feature));
+  Future<List<JavaReleaseInfo>> javaReleases() =>
+      _maybe('javaReleases', releasesResult);
+  @override
+  Future<JavaRuntimeInfo> installJava(int feature) => _maybe(
+      'installJava:$feature',
+      JavaRuntimeInfo('/data/jre$feature', '17.0.1', feature,
+          managed: true));
+  @override
+  Future<void> removeJava(int feature) =>
+      _maybe('removeJava:$feature', null);
   @override
   Future<int> requiredJava(String gameVersion) =>
       _maybe('requiredJava:$gameVersion', requiredJavaResult);

@@ -98,6 +98,31 @@ void main() {
     expect(state.creating, isEmpty);
   });
 
+  test('java events track runtime downloads', () async {
+    backend.emit(const BackendEvent(EventKind.java,
+        feature: 21, stage: 'download', received: 50, total: 100));
+    await pumpEventQueue();
+    expect(state.javaDownloads[21]!.fraction, 0.5);
+    backend.emit(const BackendEvent(EventKind.java,
+        feature: 21, stage: 'extract'));
+    await pumpEventQueue();
+    expect(state.javaDownloads[21]!.stage, 'extract');
+    backend.emit(const BackendEvent(EventKind.java,
+        feature: 21, stage: 'installed'));
+    await pumpEventQueue();
+    expect(state.javaDownloads, isEmpty);
+    // Events without a feature are ignored.
+    backend.emit(const BackendEvent(EventKind.java, stage: 'download'));
+    await pumpEventQueue();
+    expect(state.javaDownloads, isEmpty);
+    // A failed install leaves a stale entry until explicitly finished.
+    backend.emit(const BackendEvent(EventKind.java,
+        feature: 8, stage: 'download', received: 1));
+    await pumpEventQueue();
+    state.finishJavaDownload(8);
+    expect(state.javaDownloads, isEmpty);
+  });
+
   test('backup event notifies', () async {
     var notified = 0;
     state.addListener(() => notified++);

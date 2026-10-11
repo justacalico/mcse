@@ -24,6 +24,7 @@ class FrbBackend implements Backend {
           'created' => EventKind.created,
           'backup' => EventKind.backup,
           'install' => EventKind.install,
+          'java' => EventKind.java,
           _ => EventKind.error,
         },
         id: e.id,
@@ -33,6 +34,8 @@ class FrbBackend implements Backend {
         total: e.total?.toInt(),
         name: e.name,
         message: e.message,
+        feature: e.feature,
+        stage: e.stage,
       );
 
   ServerInstance _instance(frb.InstanceDto i) => ServerInstance(
@@ -151,13 +154,22 @@ class FrbBackend implements Backend {
   @override
   Future<List<JavaRuntimeInfo>> javaRuntimes() async =>
       (await frb.javaRuntimes())
-          .map((r) => JavaRuntimeInfo(r.path, r.version, r.major))
+          .map((r) =>
+              JavaRuntimeInfo(r.path, r.version, r.major, managed: r.managed))
+          .toList();
+  @override
+  Future<List<JavaReleaseInfo>> javaReleases() async =>
+      (await frb.javaReleases())
+          .map((r) => JavaReleaseInfo(r.feature, r.lts))
           .toList();
   @override
   Future<JavaRuntimeInfo> installJava(int feature) async {
     final r = await frb.installJava(feature: feature);
-    return JavaRuntimeInfo(r.path, r.version, r.major);
+    return JavaRuntimeInfo(r.path, r.version, r.major, managed: r.managed);
   }
+
+  @override
+  Future<void> removeJava(int feature) => frb.removeJava(feature: feature);
 
   @override
   Future<int> requiredJava(String gameVersion) =>

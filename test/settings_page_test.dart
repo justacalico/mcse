@@ -25,29 +25,20 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('java runtimes list + install', (tester) async {
+  testWidgets('java tile opens the manager', (tester) async {
     final backend = FakeBackend();
     await openSettings(tester, backend);
-    expect(find.text('/usr/bin/java'), findsOneWidget);
-    expect(find.text('Java 21 — 21.0.3'), findsOneWidget);
-    await tester.tap(find.text('Install 21'));
+    expect(find.text('1 detected'), findsOneWidget);
+    await tester.tap(find.text('Java runtimes'));
     await tester.pumpAndSettle();
-    expect(backend.calls, contains('installJava:21'));
+    expect(find.text('Downloads'), findsOneWidget);
+    expect(find.text('Detected runtimes'), findsOneWidget);
   });
 
-  testWidgets('no runtimes state', (tester) async {
+  testWidgets('no runtimes shows zero count', (tester) async {
     final backend = FakeBackend()..runtimesResult = [];
     await openSettings(tester, backend);
-    expect(find.text('No Java runtimes found.'), findsOneWidget);
-  });
-
-  testWidgets('install failure shows snackbar', (tester) async {
-    final backend = FakeBackend();
-    await openSettings(tester, backend);
-    backend.error = Exception('download failed');
-    await tester.tap(find.text('Install 17'));
-    await tester.pumpAndSettle();
-    expect(find.textContaining('download failed'), findsOneWidget);
+    expect(find.text('0 detected'), findsOneWidget);
   });
 
   testWidgets('data dir shows path', (tester) async {
@@ -61,7 +52,7 @@ void main() {
       ..callErrors['runtimes'] = Exception('scan fail')
       ..callErrors['dataDir'] = Exception('no dir');
     await openSettings(tester, backend);
-    expect(find.text('No Java runtimes found.'), findsOneWidget);
+    expect(find.text('0 detected'), findsOneWidget);
     expect(find.text('?'), findsOneWidget);
   });
 }
