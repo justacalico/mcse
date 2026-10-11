@@ -91,10 +91,10 @@ class _AboutPageState extends State<AboutPage> {
           ),
           ListTile(
             leading: const Icon(Icons.open_in_new),
-            title: const Text('Releases'),
-            subtitle: const Text(VersionChecker.releasesUrl),
+            title: const Text('Source code'),
+            subtitle: const Text(VersionChecker.repoUrl),
             onTap: () =>
-                launchUrl(Uri.parse(VersionChecker.releasesUrl)),
+                launchUrl(Uri.parse(VersionChecker.repoUrl)),
           ),
         ],
       ),
