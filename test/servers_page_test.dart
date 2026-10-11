@@ -19,7 +19,8 @@ void main() {
     expect(find.text('paper · 1.21.1'), findsNWidgets(2));
     expect(find.byTooltip('Start'), findsOneWidget);
     expect(find.byTooltip('Stop'), findsOneWidget);
-    expect(find.byTooltip('Restart'), findsNWidgets(2));
+    // Only the running server offers restart.
+    expect(find.byTooltip('Restart'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Start'));
     await tester.pump();
@@ -28,6 +29,10 @@ void main() {
     await tester.tap(find.byTooltip('Stop'));
     await tester.pump();
     expect(backend.calls, contains('stop:srv-2'));
+
+    await tester.tap(find.byTooltip('Restart'));
+    await tester.pump();
+    expect(backend.calls, contains('restart:srv-2'));
   });
 
   testWidgets('creating tile shows progress and failure states',
@@ -89,5 +94,7 @@ void main() {
     expect(find.text('Crashed'), findsOneWidget);
     // Busy servers can't be stopped or restarted.
     expect(backend.calls.contains('stop:a'), isFalse);
+    // Stopping and crashed servers hide the restart action.
+    expect(find.byTooltip('Restart'), findsOneWidget);
   });
 }
