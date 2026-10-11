@@ -342,13 +342,8 @@ pub fn get_properties(id: String) -> Result<HashMap<String, String>, anyhow::Err
         .collect())
 }
 
-pub fn set_properties(
-    id: String,
-    changes: HashMap<String, String>,
-) -> Result<(), anyhow::Error> {
-    Ok(rt().block_on(
-        mgr().set_properties(parse_id(&id)?, changes.into_iter().collect()),
-    )?)
+pub fn set_properties(id: String, changes: HashMap<String, String>) -> Result<(), anyhow::Error> {
+    Ok(rt().block_on(mgr().set_properties(parse_id(&id)?, changes.into_iter().collect()))?)
 }
 
 pub fn default_properties() -> HashMap<String, String> {

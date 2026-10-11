@@ -42,16 +42,13 @@ impl LoaderProvider for Fabric {
             .first()
             .map(|l| l.version.clone())
             .ok_or_else(|| err_not_found(game_version))?;
-        let installers: Vec<MetaVersion> =
-            get_json(client, &format!("{META}/installer")).await?;
+        let installers: Vec<MetaVersion> = get_json(client, &format!("{META}/installer")).await?;
         let installer = installers
             .first()
             .map(|i| i.version.clone())
             .ok_or_else(|| err_not_found(game_version))?;
         Ok(ServerArtifact::Jar {
-            url: format!(
-                "{META}/loader/{game_version}/{loader}/{installer}/server/jar"
-            ),
+            url: format!("{META}/loader/{game_version}/{loader}/{installer}/server/jar"),
             filename: format!("fabric-server-{game_version}-{loader}.jar"),
             sha1: None,
             sha256: None,

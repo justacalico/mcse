@@ -25,16 +25,12 @@ struct Args {
 async fn main() -> std::io::Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info".into()),
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
         )
         .init();
     let args = Args::parse();
-    let data_dir = args
-        .data_dir
-        .unwrap_or_else(mcse_core::paths::data_dir);
-    let manager = Manager::new(data_dir)
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+    let data_dir = args.data_dir.unwrap_or_else(mcse_core::paths::data_dir);
+    let manager = Manager::new(data_dir).map_err(|e| std::io::Error::other(e.to_string()))?;
     let addr: SocketAddr = format!("{}:{}", args.host, args.port)
         .parse()
         .expect("invalid listen address");

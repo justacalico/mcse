@@ -30,8 +30,7 @@ fn included(dir: &Path) -> Vec<PathBuf> {
             let name = e.file_name().to_string_lossy().to_string();
             let include = name.starts_with("world")
                 || EXTRA.contains(&name.as_str())
-                || (e.path().is_file()
-                    && (name.ends_with(".yml") || name.ends_with(".yaml")));
+                || (e.path().is_file() && (name.ends_with(".yml") || name.ends_with(".yaml")));
             if include {
                 out.push(e.path());
             }
@@ -116,7 +115,10 @@ pub async fn list(instance: &Instance) -> Result<Vec<BackupMeta>> {
                 name: e.file_name().to_string_lossy().to_string(),
                 path: p,
                 size_bytes: meta.len(),
-                created_at: meta.modified().map(Into::into).unwrap_or_else(|_| Utc::now()),
+                created_at: meta
+                    .modified()
+                    .map(Into::into)
+                    .unwrap_or_else(|_| Utc::now()),
             });
         }
     }

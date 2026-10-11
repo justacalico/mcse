@@ -174,7 +174,10 @@ impl Forge {
         }
         if minor == 20 {
             Some(format!("20.{patch}."))
-        } else if patch == 0 && !game_version.ends_with(".0") && game_version.matches('.').count() == 1 {
+        } else if patch == 0
+            && !game_version.ends_with(".0")
+            && game_version.matches('.').count() == 1
+        {
             Some(format!("{minor}.0."))
         } else {
             Some(format!("{minor}.{patch}."))
@@ -200,9 +203,18 @@ mod tests {
 
     #[test]
     fn neoforge_map() {
-        assert_eq!(Forge::neoforge_game_version("21.1.72"), Some("1.21.1".into()));
-        assert_eq!(Forge::neoforge_game_version("20.4.237"), Some("1.20.4".into()));
-        assert_eq!(Forge::neoforge_game_version("21.0.167"), Some("1.21".into()));
+        assert_eq!(
+            Forge::neoforge_game_version("21.1.72"),
+            Some("1.21.1".into())
+        );
+        assert_eq!(
+            Forge::neoforge_game_version("20.4.237"),
+            Some("1.20.4".into())
+        );
+        assert_eq!(
+            Forge::neoforge_game_version("21.0.167"),
+            Some("1.21".into())
+        );
         assert_eq!(
             Forge::neoforge_game_version_to_prefix("1.21.1"),
             Some("21.1.".into())

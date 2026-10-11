@@ -13,11 +13,7 @@ pub fn parse_version_output(out: &str) -> Option<(String, u32)> {
     let major = if let Some(rest) = version.strip_prefix("1.") {
         rest.split('.').next()?.parse().ok()?
     } else {
-        version
-            .split(|c: char| c == '.' || c == '-' || c == '+' || c == '_')
-            .next()?
-            .parse()
-            .ok()?
+        version.split(['.', '-', '+', '_']).next()?.parse().ok()?
     };
     Some((version, major))
 }
@@ -133,7 +129,13 @@ fn which() -> std::io::Result<PathBuf> {
 pub fn required_java(game_version: &str) -> u32 {
     let parts: Vec<u32> = game_version
         .split('.')
-        .filter_map(|p| p.chars().take_while(|c| c.is_ascii_digit()).collect::<String>().parse().ok())
+        .filter_map(|p| {
+            p.chars()
+                .take_while(|c| c.is_ascii_digit())
+                .collect::<String>()
+                .parse()
+                .ok()
+        })
         .collect();
     let minor = parts.get(1).copied().unwrap_or(0);
     let patch = parts.get(2).copied().unwrap_or(0);
@@ -151,7 +153,7 @@ pub fn required_java(game_version: &str) -> u32 {
 
 /// Pick the best runtime for a game version: smallest major >= required,
 /// preferring an exact match.
-pub fn pick_runtime<'a>(runtimes: &'a [JavaRuntime], required: u32) -> Option<&'a JavaRuntime> {
+pub fn pick_runtime(runtimes: &[JavaRuntime], required: u32) -> Option<&JavaRuntime> {
     runtimes
         .iter()
         .filter(|r| r.major >= required)
@@ -254,13 +256,25 @@ mod tests {
 
     #[test]
     fn pick_best() {
-        let r8 = JavaRuntime { path: PathBuf::from("/j8"), version: "1.8".into(), major: 8 };
-        let r17 = JavaRuntime { path: PathBuf::from("/j17"), version: "17".into(), major: 17 };
-        let r21 = JavaRuntime { path: PathBuf::from("/j21"), version: "21".into(), major: 21 };
+        let r8 = JavaRuntime {
+            path: PathBuf::from("/j8"),
+            version: "1.8".into(),
+            major: 8,
+        };
+        let r17 = JavaRuntime {
+            path: PathBuf::from("/j17"),
+            version: "17".into(),
+            major: 17,
+        };
+        let r21 = JavaRuntime {
+            path: PathBuf::from("/j21"),
+            version: "21".into(),
+            major: 21,
+        };
         let all = vec![r21.clone(), r8.clone(), r17.clone()];
         assert_eq!(pick_runtime(&all, 8).unwrap().major, 8);
         assert_eq!(pick_runtime(&all, 17).unwrap().major, 17);
         assert_eq!(pick_runtime(&all, 21).unwrap().major, 21);
-        assert!(pick_runtime(&[r8.clone()], 21).is_none());
+        assert!(pick_runtime(std::slice::from_ref(&r8), 21).is_none());
     }
 }

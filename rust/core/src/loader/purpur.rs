@@ -54,8 +54,7 @@ impl LoaderProvider for Purpur {
     ) -> Result<ServerArtifact> {
         let info: VersionInfo = get_json(client, &format!("{API}/{game_version}")).await?;
         let build = &info.builds.latest;
-        let meta: BuildMeta =
-            get_json(client, &format!("{API}/{game_version}/{build}")).await?;
+        let meta: BuildMeta = get_json(client, &format!("{API}/{game_version}/{build}")).await?;
         Ok(ServerArtifact::Jar {
             url: format!("{API}/{game_version}/{build}/download"),
             filename: format!("purpur-{game_version}-{build}.jar"),

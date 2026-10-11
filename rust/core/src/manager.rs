@@ -88,7 +88,7 @@ impl Manager {
                 max_players: None,
             });
         }
-        out.sort_by(|a, b| a.instance.created_at.cmp(&b.instance.created_at));
+        out.sort_by_key(|i| i.instance.created_at);
         out
     }
 
@@ -123,10 +123,7 @@ impl Manager {
 
     /// Create an instance: download the artifact, run installers, write
     /// eula + properties, register it. Progress arrives on the event bus.
-    pub async fn create_instance(
-        self: &Arc<Self>,
-        req: CreateRequest,
-    ) -> Result<Uuid> {
+    pub async fn create_instance(self: &Arc<Self>, req: CreateRequest) -> Result<Uuid> {
         if !req.accept_eula {
             return Err(Error::Msg(
                 "the Minecraft EULA must be accepted to create a server".into(),
@@ -235,9 +232,7 @@ impl Manager {
         }
         let status = child.wait().await?;
         if !status.success() {
-            return Err(Error::Installer(format!(
-                "installer exited with {status}"
-            )));
+            return Err(Error::Installer(format!("installer exited with {status}")));
         }
         Ok(())
     }
@@ -382,11 +377,7 @@ impl Manager {
         Ok(ServerProperties::load(&inst.dir.join("server.properties"))?.map)
     }
 
-    pub async fn set_properties(
-        &self,
-        id: Uuid,
-        changes: BTreeMap<String, String>,
-    ) -> Result<()> {
+    pub async fn set_properties(&self, id: Uuid, changes: BTreeMap<String, String>) -> Result<()> {
         let inst = self.instance(id).await?;
         ServerProperties::update_file(&inst.dir.join("server.properties"), &changes)
     }

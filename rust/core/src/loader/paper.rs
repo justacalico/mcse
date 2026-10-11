@@ -74,7 +74,10 @@ impl LoaderProvider for Paper {
         .await?;
         let app = info.downloads.application;
         Ok(ServerArtifact::Jar {
-            url: format!("{API}/versions/{game_version}/builds/{build}/downloads/{}", app.name),
+            url: format!(
+                "{API}/versions/{game_version}/builds/{build}/downloads/{}",
+                app.name
+            ),
             filename: app.name,
             sha1: None,
             sha256: Some(app.sha256),

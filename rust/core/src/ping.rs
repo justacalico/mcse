@@ -44,10 +44,7 @@ async fn ping_inner(host: &str, port: u16) -> Result<PingResult> {
             .as_ref()
             .map(|v| v.name.clone())
             .unwrap_or_default(),
-        protocol: resp
-            .version
-            .and_then(|v| v.protocol)
-            .unwrap_or_default(),
+        protocol: resp.version.and_then(|v| v.protocol).unwrap_or_default(),
         favicon: resp.favicon,
     })
 }
@@ -149,8 +146,7 @@ mod tests {
 
     #[test]
     fn motd_forms() {
-        let r: StatusResponse =
-            serde_json::from_str(r#"{"description":"hello"}"#).unwrap();
+        let r: StatusResponse = serde_json::from_str(r#"{"description":"hello"}"#).unwrap();
         assert_eq!(r.motd(), "hello");
         let r: StatusResponse =
             serde_json::from_str(r#"{"description":{"text":"world"}}"#).unwrap();

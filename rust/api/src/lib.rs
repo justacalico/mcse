@@ -91,10 +91,7 @@ fn parse_loader(raw: &str) -> mcse_core::Result<LoaderKind> {
     }
 }
 
-async fn versions(
-    State(s): State<AppState>,
-    Path(kind): Path<String>,
-) -> axum::response::Response {
+async fn versions(State(s): State<AppState>, Path(kind): Path<String>) -> axum::response::Response {
     match parse_loader(&kind) {
         Ok(loader) => respond(s.manager.game_versions(loader).await),
         Err(e) => map_err(e),
@@ -130,9 +127,7 @@ async fn create_instance(
         accept_eula: body.accept_eula,
         min_ram_mb: body.min_ram_mb.unwrap_or(1024),
         max_ram_mb: body.max_ram_mb.unwrap_or(4096),
-        properties: body
-            .properties
-            .unwrap_or_else(|| mgr.default_properties()),
+        properties: body.properties.unwrap_or_else(|| mgr.default_properties()),
     };
     // Creation downloads files and may run an installer — run it in the
     // background so the client can watch progress over /ws.
@@ -144,11 +139,7 @@ async fn create_instance(
             });
         }
     });
-    (
-        StatusCode::ACCEPTED,
-        Json(serde_json::json!({"id": id})),
-    )
-        .into_response()
+    (StatusCode::ACCEPTED, Json(serde_json::json!({"id": id}))).into_response()
 }
 
 async fn get_instance(State(s): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
@@ -239,10 +230,7 @@ async fn ping_server(State(s): State<AppState>, Path(id): Path<Uuid>) -> impl In
     respond(s.manager.ping(id).await)
 }
 
-async fn get_properties(
-    State(s): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> impl IntoResponse {
+async fn get_properties(State(s): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
     respond(s.manager.get_properties(id).await)
 }
 
@@ -335,9 +323,7 @@ fn respond_unit(r: mcse_core::Result<()>) -> axum::response::Response {
 fn map_err(e: mcse_core::Error) -> axum::response::Response {
     use mcse_core::Error::*;
     let code = match e {
-        InstanceNotFound(_) | BackupNotFound(_) | VersionNotFound(_) => {
-            StatusCode::NOT_FOUND
-        }
+        InstanceNotFound(_) | BackupNotFound(_) | VersionNotFound(_) => StatusCode::NOT_FOUND,
         AlreadyRunning(_) | NotRunning(_) | UnknownLoader(_) => StatusCode::CONFLICT,
         _ => StatusCode::INTERNAL_SERVER_ERROR,
     };

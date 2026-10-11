@@ -12,11 +12,12 @@ include: package:flutter_lints/flutter.yaml
 analyzer:
   exclude:
     - build/**
-    - android/**
-    - ios/**
     - windows/**
     - macos/**
     - linux/**
+    - landing/**
+    - rust_builder/cargokit/**
+    - packages/mcse_bridge/lib/src/rust/**
 
 linter:
   # The lint rules applied to this project can be customized in the

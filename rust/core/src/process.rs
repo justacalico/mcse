@@ -42,17 +42,12 @@ impl ServerHandle {
     }
 
     pub async fn uptime_secs(&self) -> Option<u64> {
-        self.started_at
-            .read()
-            .await
-            .map(|t| t.elapsed().as_secs())
+        self.started_at.read().await.map(|t| t.elapsed().as_secs())
     }
 
     pub async fn send_command(&self, command: &str) -> Result<()> {
         let mut stdin = self.stdin.lock().await;
-        let stdin = stdin
-            .as_mut()
-            .ok_or_else(|| Error::NotRunning(self.id))?;
+        let stdin = stdin.as_mut().ok_or_else(|| Error::NotRunning(self.id))?;
         stdin.write_all(command.as_bytes()).await?;
         stdin.write_all(b"\n").await?;
         stdin.flush().await?;
@@ -173,9 +168,9 @@ pub async fn spawn(
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .kill_on_drop(true);
-    let mut child = cmd.spawn().map_err(|e| {
-        Error::Msg(format!("failed to start {:?}: {e}", spec.java))
-    })?;
+    let mut child = cmd
+        .spawn()
+        .map_err(|e| Error::Msg(format!("failed to start {:?}: {e}", spec.java)))?;
     let stdin = child.stdin.take().unwrap();
     let stdout = child.stdout.take().unwrap();
     let stderr = child.stderr.take().unwrap();
