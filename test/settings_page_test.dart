@@ -17,6 +17,8 @@ void main() {
     expect(find.text('Appearance'), findsOneWidget);
     await tester.tap(find.text('Dark'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('OLED'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Light'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('System'));
