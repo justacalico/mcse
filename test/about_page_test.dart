@@ -21,7 +21,7 @@ void main() {
     expect(find.text('mcse'), findsNWidgets(2));
     expect(find.text('1.0.0'), findsOneWidget);
     expect(find.text('Check for updates'), findsOneWidget);
-    expect(find.text('Releases'), findsOneWidget);
+    expect(find.text('Source code'), findsOneWidget);
   });
 
   testWidgets('update available shows prompt and launches url',
@@ -57,9 +57,9 @@ void main() {
     expect(find.text('Update available: 2.0.0'), findsOneWidget);
   });
 
-  testWidgets('releases tile launches the releases page', (tester) async {
+  testWidgets('source code tile launches the project page', (tester) async {
     await openAbout(tester, FakeBackend());
-    await tester.tap(find.text('Releases'));
+    await tester.tap(find.text('Source code'));
     await tester.pumpAndSettle();
   });
 

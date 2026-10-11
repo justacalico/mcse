@@ -23,6 +23,7 @@ class VersionChecker {
   static const _projectPath = 'HttpAnimations/mcse';
   static const _perPage = 100;
   static const _maxPages = 10;
+  static const repoUrl = 'https://$_host/$_projectPath';
   static const releasesUrl = 'https://$_host/$_projectPath/-/releases';
 
   http.Client? _client;
