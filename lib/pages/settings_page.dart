@@ -61,13 +61,14 @@ class _SettingsPageState extends State<SettingsPage> {
         children: [
           Text('Appearance', style: Theme.of(context).textTheme.titleSmall),
           const SizedBox(height: 8),
-          SegmentedButton<ThemeMode>(
+          SegmentedButton<AppTheme>(
             segments: const [
               ButtonSegment(
-                  value: ThemeMode.system, label: Text('System')),
+                  value: AppTheme.system, label: Text('System')),
               ButtonSegment(
-                  value: ThemeMode.light, label: Text('Light')),
-              ButtonSegment(value: ThemeMode.dark, label: Text('Dark')),
+                  value: AppTheme.light, label: Text('Light')),
+              ButtonSegment(value: AppTheme.dark, label: Text('Dark')),
+              ButtonSegment(value: AppTheme.oled, label: Text('OLED')),
             ],
             selected: {theme.mode},
             onSelectionChanged: (s) => theme.setMode(s.first),

@@ -22,3 +22,11 @@ ThemeData mcseTheme(Brightness brightness) {
 
 ThemeData get lightTheme => mcseTheme(Brightness.light);
 ThemeData get darkTheme => mcseTheme(Brightness.dark);
+
+ThemeData get oledTheme {
+  final theme = mcseTheme(Brightness.dark);
+  return theme.copyWith(
+    scaffoldBackgroundColor: Colors.black,
+    colorScheme: theme.colorScheme.copyWith(surface: Colors.black),
+  );
+}

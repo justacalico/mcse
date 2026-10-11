@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mcse/app.dart';
+import 'package:mcse/state/theme_state.dart';
 import 'package:mcse/state/update_state.dart';
 
 import 'fake_backend.dart';
@@ -63,6 +64,20 @@ void main() {
     final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
     expect(app.themeMode, ThemeMode.system);
     expect(app.darkTheme, isNotNull);
+  });
+
+  testWidgets('oled mode forces dark with black surfaces', (tester) async {
+    final backend = FakeBackend();
+    await tester.pumpWidget(buildApp(
+      backend: backend,
+      themeState: ThemeState(AppTheme.oled),
+      updateState: stubUpdateState(),
+    ));
+    await tester.pumpAndSettle();
+    final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
+    expect(app.themeMode, ThemeMode.dark);
+    expect(app.darkTheme!.scaffoldBackgroundColor, Colors.black);
+    expect(app.darkTheme!.colorScheme.surface, Colors.black);
   });
 
   test('defaultUpdateState builds a checker-backed state', () {

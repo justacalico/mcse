@@ -38,8 +38,12 @@ class McseApp extends StatelessWidget {
       title: 'mcse',
       debugShowCheckedModeBanner: false,
       theme: lightTheme,
-      darkTheme: darkTheme,
-      themeMode: theme.mode,
+      darkTheme: theme.mode == AppTheme.oled ? oledTheme : darkTheme,
+      themeMode: switch (theme.mode) {
+        AppTheme.system => ThemeMode.system,
+        AppTheme.light => ThemeMode.light,
+        AppTheme.dark || AppTheme.oled => ThemeMode.dark,
+      },
       builder: (context, child) => Column(
         children: [const WindowTopBar(), Expanded(child: child!)],
       ),
