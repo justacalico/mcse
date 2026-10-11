@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.1.3 - 2026-10-11
+#### Bug Fixes
+- 包注册表查询失败不再中止发布同步 - (4c29673) - HttpAnimations
+
+- - -
+
 ## v0.1.2 - 2026-10-11
 #### Bug Fixes
 - 加载与保存失败时展示错误而非无限加载 - (abc0733) - HttpAnimations
