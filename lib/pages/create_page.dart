@@ -1,5 +1,7 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../backend/backend.dart';
 import '../state/app_state.dart';
@@ -22,6 +24,9 @@ class _CreatePageState extends State<CreatePage> {
   String? _version;
   bool _stableOnly = true;
   bool _eula = false;
+  final _eulaLink = TapGestureRecognizer()
+    ..onTap = () => launchUrl(
+        Uri.parse('https://aka.ms/MinecraftEULA'));
   double _ram = 4096;
   String? _error;
   bool _submitting = false;
@@ -41,6 +46,7 @@ class _CreatePageState extends State<CreatePage> {
     _name.dispose();
     _motd.dispose();
     _port.dispose();
+    _eulaLink.dispose();
     super.dispose();
   }
 
@@ -206,8 +212,22 @@ class _CreatePageState extends State<CreatePage> {
             value: _eula,
             onChanged: (v) => setState(() => _eula = v ?? false),
             title: const Text('I accept the Minecraft EULA'),
-            subtitle: const Text(
-                'Required to run a server — see https://aka.ms/MinecraftEULA'),
+            subtitle: Text.rich(
+              TextSpan(
+                text: 'Required to run a server — see ',
+                children: [
+                  TextSpan(
+                    text: 'https://aka.ms/MinecraftEULA',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      decoration: TextDecoration.underline,
+                    ),
+                    mouseCursor: SystemMouseCursors.click,
+                    recognizer: _eulaLink,
+                  ),
+                ],
+              ),
+            ),
             controlAffinity: ListTileControlAffinity.leading,
             contentPadding: EdgeInsets.zero,
           ),

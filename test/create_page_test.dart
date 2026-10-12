@@ -5,6 +5,8 @@ import 'fake_backend.dart';
 import 'helpers.dart';
 
 void main() {
+  setUp(mockUrlLauncher);
+
   Future<void> openCreate(WidgetTester tester, FakeBackend backend) async {
     await tester.pumpWidget(testApp(backend));
     await tester.pumpAndSettle();
@@ -155,6 +157,20 @@ void main() {
     await tester.pumpAndSettle();
     await scrollTo(tester, find.textContaining('api down'));
     expect(find.textContaining('api down'), findsOneWidget);
+  });
+
+  testWidgets('eula link opens without toggling the checkbox',
+      (tester) async {
+    final backend = FakeBackend();
+    await openCreate(tester, backend);
+    await scrollTo(
+        tester,
+        find.textContaining('https://aka.ms/MinecraftEULA',
+            findRichText: true));
+    await tester.tapOnText(
+        find.textRange.ofSubstring('https://aka.ms/MinecraftEULA'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isFalse);
   });
 
   testWidgets('requires eula and version before create', (tester) async {
