@@ -2,6 +2,24 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v0.4.0 - 2026-10-12
+#### Features
+- 支持自定义数据、Java 与备份目录 - (9a1fa20) - HttpAnimations
+- 落地页支持多语言 - (38db7b8) - HttpAnimations
+- 为应用添加完整多语言支持 - (8c0daee) - HttpAnimations
+- 创建页 EULA 链接可点击 - (fce474b) - HttpAnimations
+- 关于页显示真实应用图标 - (9f3f5b4) - HttpAnimations
+- 添加 Java 下载管理器 - (33d7ddf) - HttpAnimations
+#### Bug Fixes
+- 服务器未运行时禁用控制台命令输入 - (6a147fc) - HttpAnimations
+- 创建页显示创建进度弹窗并阻止同名服务器 - (640ae55) - HttpAnimations
+- 迁移 Paper 下载到 Fill API v3 - (dc0e811) - HttpAnimations
+- 移除创建页无用的仅正式版筛选 - (d8be6b1) - HttpAnimations
+- 关于页改为 GitLab 源代码链接 - (15a1ebb) - HttpAnimations
+- 仅在服务器运行时显示重启按钮 - (316a8d8) - HttpAnimations
+
+- - -
+
 ## v0.3.0 - 2026-10-11
 #### Features
 - 添加 OLED 纯黑主题 - (0e2637b) - HttpAnimations
