@@ -6,9 +6,14 @@ import 'package:mcse_bridge/mcse_bridge.dart' as frb;
 
 import 'backend.dart';
 
-Future<Backend> createBackend() async {
+Future<Backend> createBackend({
+  String? dataDir,
+  String? javaDir,
+  String? backupsDir,
+}) async {
   await frb.McseBridge.init();
-  await frb.initBackend();
+  await frb.initBackend(
+      dataDir: dataDir, runtimesDir: javaDir, backupsDir: backupsDir);
   return FrbBackend();
 }
 
@@ -177,4 +182,10 @@ class FrbBackend implements Backend {
 
   @override
   Future<String> dataDir() => frb.backendDataDir();
+
+  @override
+  Future<String> javaDir() => frb.backendRuntimesDir();
+
+  @override
+  Future<String> backupsDir() => frb.backendBackupsDir();
 }

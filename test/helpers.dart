@@ -7,6 +7,7 @@ import 'package:mcse/app.dart';
 import 'package:mcse/l10n/app_localizations.dart';
 import 'package:mcse/models/app_update.dart';
 import 'package:mcse/services/version_checker.dart';
+import 'package:mcse/state/dirs_state.dart';
 import 'package:mcse/state/locale_state.dart';
 import 'package:mcse/state/theme_state.dart';
 import 'package:mcse/state/update_state.dart';
@@ -33,12 +34,15 @@ UpdateState stubUpdateState({AppUpdate? result, bool fail = false}) =>
     );
 
 Widget testApp(FakeBackend backend,
-        {UpdateState? updateState, LocaleState? localeState}) =>
+        {UpdateState? updateState,
+        LocaleState? localeState,
+        DirsState? dirsState}) =>
     buildApp(
       backend: backend,
       themeState: ThemeState(),
       localeState: localeState ?? LocaleState(),
       updateState: updateState ?? stubUpdateState(),
+      dirsState: dirsState,
     );
 
 Widget localized(Widget child) => MaterialApp(

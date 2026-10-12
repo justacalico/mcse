@@ -8,11 +8,19 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `event_dto`, `instance_dto`, `mgr`, `parse_id`, `parse_loader`, `rt`, `status_name`
 
-Future<void> initBackend({String? dataDir}) =>
-    McseBridge.instance.api.crateApiInitBackend(dataDir: dataDir);
+Future<void> initBackend(
+        {String? dataDir, String? runtimesDir, String? backupsDir}) =>
+    McseBridge.instance.api.crateApiInitBackend(
+        dataDir: dataDir, runtimesDir: runtimesDir, backupsDir: backupsDir);
 
 Future<String> backendDataDir() =>
     McseBridge.instance.api.crateApiBackendDataDir();
+
+Future<String> backendRuntimesDir() =>
+    McseBridge.instance.api.crateApiBackendRuntimesDir();
+
+Future<String> backendBackupsDir() =>
+    McseBridge.instance.api.crateApiBackendBackupsDir();
 
 /// Stream every backend event to Dart.
 Stream<EventDto> subscribeEvents() =>

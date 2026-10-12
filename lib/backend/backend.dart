@@ -204,4 +204,6 @@ abstract class Backend {
   Future<int> requiredJava(String gameVersion);
 
   Future<String> dataDir();
+  Future<String> javaDir();
+  Future<String> backupsDir();
 }

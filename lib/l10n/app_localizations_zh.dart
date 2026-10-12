@@ -68,6 +68,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dataDir => '数据目录';
 
   @override
+  String get storageTitle => '存储';
+
+  @override
+  String get javaDir => 'Java 安装位置';
+
+  @override
+  String get backupsDir => '备份目录';
+
+  @override
+  String get dirDialogHint => '文件不会被移动。重启 mcse 后使用新位置。';
+
+  @override
+  String get browseDir => '浏览';
+
+  @override
+  String get useDefaultDir => '使用默认';
+
+  @override
+  String get dirPendingRestart => '重启后生效';
+
+  @override
   String get javaTitle => 'Java';
 
   @override

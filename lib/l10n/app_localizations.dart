@@ -211,6 +211,48 @@ abstract class AppLocalizations {
   /// **'Data directory'**
   String get dataDir;
 
+  /// No description provided for @storageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage'**
+  String get storageTitle;
+
+  /// No description provided for @javaDir.
+  ///
+  /// In en, this message translates to:
+  /// **'Java install location'**
+  String get javaDir;
+
+  /// No description provided for @backupsDir.
+  ///
+  /// In en, this message translates to:
+  /// **'Backups directory'**
+  String get backupsDir;
+
+  /// No description provided for @dirDialogHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Files are not moved. The new location is used after restarting mcse.'**
+  String get dirDialogHint;
+
+  /// No description provided for @browseDir.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse'**
+  String get browseDir;
+
+  /// No description provided for @useDefaultDir.
+  ///
+  /// In en, this message translates to:
+  /// **'Use default'**
+  String get useDefaultDir;
+
+  /// No description provided for @dirPendingRestart.
+  ///
+  /// In en, this message translates to:
+  /// **'applies after restart'**
+  String get dirPendingRestart;
+
   /// No description provided for @javaTitle.
   ///
   /// In en, this message translates to:

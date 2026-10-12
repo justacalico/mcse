@@ -68,6 +68,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dataDir => 'Data directory';
 
   @override
+  String get storageTitle => 'Storage';
+
+  @override
+  String get javaDir => 'Java install location';
+
+  @override
+  String get backupsDir => 'Backups directory';
+
+  @override
+  String get dirDialogHint =>
+      'Files are not moved. The new location is used after restarting mcse.';
+
+  @override
+  String get browseDir => 'Browse';
+
+  @override
+  String get useDefaultDir => 'Use default';
+
+  @override
+  String get dirPendingRestart => 'applies after restart';
+
+  @override
   String get javaTitle => 'Java';
 
   @override
@@ -423,6 +445,28 @@ class AppLocalizationsEnGb extends AppLocalizationsEn {
 
   @override
   String get dataDir => 'Data directory';
+
+  @override
+  String get storageTitle => 'Storage';
+
+  @override
+  String get javaDir => 'Java install location';
+
+  @override
+  String get backupsDir => 'Backups directory';
+
+  @override
+  String get dirDialogHint =>
+      'Files are not moved. The new location is used after restarting mcse.';
+
+  @override
+  String get browseDir => 'Browse';
+
+  @override
+  String get useDefaultDir => 'Use default';
+
+  @override
+  String get dirPendingRestart => 'applies after restart';
 
   @override
   String get javaTitle => 'Java';

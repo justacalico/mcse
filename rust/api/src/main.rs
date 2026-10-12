@@ -12,10 +12,18 @@ struct Args {
     port: u16,
     #[arg(long, default_value = "127.0.0.1")]
     host: String,
-    /// Data directory (instances, backups, runtimes). Defaults to the
-    /// platform data dir (~/.local/share/mcse on Linux).
+    /// Data directory (instances, registry, downloads). Defaults to the
+    /// platform data dir (~/.local/share/mcse on Linux) or $MCSE_DATA_DIR.
     #[arg(long)]
     data_dir: Option<PathBuf>,
+    /// Where downloaded Java runtimes are installed. Defaults to
+    /// <data-dir>/runtimes or $MCSE_RUNTIMES_DIR.
+    #[arg(long)]
+    runtimes_dir: Option<PathBuf>,
+    /// Where backups are stored. Defaults to <data-dir>/backups or
+    /// $MCSE_BACKUPS_DIR.
+    #[arg(long)]
+    backups_dir: Option<PathBuf>,
     /// Static files to serve at / (a future web UI).
     #[arg(long)]
     web_dir: Option<PathBuf>,
@@ -35,7 +43,8 @@ async fn main() -> std::io::Result<()> {
         .init();
     let args = Args::parse();
     let data_dir = args.data_dir.unwrap_or_else(mcse_core::paths::data_dir);
-    let manager = Manager::new(data_dir).map_err(|e| std::io::Error::other(e.to_string()))?;
+    let manager = Manager::with_dirs(data_dir, args.runtimes_dir, args.backups_dir)
+        .map_err(|e| std::io::Error::other(e.to_string()))?;
     let addr: SocketAddr = format!("{}:{}", args.host, args.port)
         .parse()
         .map_err(|e| std::io::Error::other(format!("invalid listen address: {e}")))?;

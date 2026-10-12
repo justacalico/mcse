@@ -1,5 +1,5 @@
 use crate::models::{JavaRelease, JavaRuntime};
-use crate::{paths, Error, Result};
+use crate::{Error, Result};
 use std::path::{Path, PathBuf};
 use tokio::process::Command;
 
@@ -42,12 +42,12 @@ fn java_binary(dir: &Path) -> PathBuf {
     }
 }
 
-fn candidate_dirs(root: &Path) -> Vec<PathBuf> {
+fn candidate_dirs(runtimes_dir: &Path) -> Vec<PathBuf> {
     let mut dirs = vec![];
     if let Ok(home) = std::env::var("JAVA_HOME") {
         dirs.push(PathBuf::from(home));
     }
-    dirs.push(paths::runtimes_dir(root));
+    dirs.push(runtimes_dir.to_path_buf());
     if cfg!(target_os = "linux") {
         dirs.push(PathBuf::from("/usr/lib/jvm"));
         dirs.push(PathBuf::from("/usr/java"));
@@ -61,11 +61,13 @@ fn candidate_dirs(root: &Path) -> Vec<PathBuf> {
     dirs
 }
 
-/// Detect every java runtime on the system + managed runtimes.
-pub async fn detect_runtimes(root: &Path) -> Vec<JavaRuntime> {
+/// Detect every java runtime on the system + managed runtimes under
+/// `runtimes_dir`.
+pub async fn detect_runtimes(runtimes_dir: &Path) -> Vec<JavaRuntime> {
     let mut found: Vec<JavaRuntime> = vec![];
     let mut seen = std::collections::HashSet::new();
-    let managed_root = paths::runtimes_dir(root);
+    let managed_root =
+        dunce::canonicalize(runtimes_dir).unwrap_or_else(|_| runtimes_dir.to_path_buf());
 
     // `java` on PATH
     if let Ok(path) = which() {
@@ -75,10 +77,11 @@ pub async fn detect_runtimes(root: &Path) -> Vec<JavaRuntime> {
         }
     }
 
-    for base in candidate_dirs(root) {
+    for base in candidate_dirs(&managed_root) {
         if !base.is_dir() {
             continue;
         }
+        let managed = base == managed_root;
         let mut homes = vec![base.clone()];
         if let Ok(mut rd) = tokio::fs::read_dir(&base).await {
             while let Ok(Some(e)) = rd.next_entry().await {
@@ -94,7 +97,16 @@ pub async fn detect_runtimes(root: &Path) -> Vec<JavaRuntime> {
             }
         }
         for home in homes {
-            let bin = java_binary(&home);
+            // Managed installs nest as temurin-N/jdk-*/bin/java, so walk
+            // them recursively; system dirs only go one level deep.
+            let bin = if managed {
+                match find_java(&home) {
+                    Some(b) => b,
+                    None => continue,
+                }
+            } else {
+                java_binary(&home)
+            };
             if !bin.exists() || seen.contains(&bin) {
                 continue;
             }
@@ -208,7 +220,12 @@ fn parse_releases(body: &str) -> Result<Vec<JavaRelease>> {
 /// top-level jdk-* folder; macOS adds Contents/Home).
 fn find_java(dir: &Path) -> Option<PathBuf> {
     let mut stack = vec![dir.to_path_buf()];
+    let mut seen = std::collections::HashSet::new();
     while let Some(d) = stack.pop() {
+        let key = dunce::canonicalize(&d).unwrap_or_else(|_| d.clone());
+        if !seen.insert(key) {
+            continue;
+        }
         let bin = java_binary(&d);
         if bin.exists() {
             return Some(bin);
@@ -224,17 +241,19 @@ fn find_java(dir: &Path) -> Option<PathBuf> {
     None
 }
 
-/// Download a Temurin runtime from the Adoptium API into the managed
-/// runtimes dir. No-ops when the feature is already installed. Newer
-/// feature releases only ship a JDK, so it falls back from JRE to JDK.
+/// Download a Temurin runtime from the Adoptium API into `runtimes_dir`,
+/// staging the archive in `downloads_dir`. No-ops when the feature is
+/// already installed. Newer feature releases only ship a JDK, so it falls
+/// back from JRE to JDK.
 pub async fn install_temurin(
     client: &reqwest::Client,
-    root: &Path,
+    runtimes_dir: &Path,
+    downloads_dir: &Path,
     feature: u32,
     on_progress: impl Fn(u64, Option<u64>),
     on_stage: impl Fn(&str),
 ) -> Result<JavaRuntime> {
-    let dest_dir = paths::runtimes_dir(root).join(format!("temurin-{feature}"));
+    let dest_dir = runtimes_dir.join(format!("temurin-{feature}"));
     if let Some(bin) = find_java(&dest_dir) {
         if let Some(rt) = probe(&bin, true).await {
             return Ok(rt);
@@ -254,7 +273,8 @@ pub async fn install_temurin(
         "x64"
     };
     tokio::fs::create_dir_all(&dest_dir).await?;
-    let archive = paths::downloads_dir(root).join(format!("temurin-{feature}.bin"));
+    tokio::fs::create_dir_all(downloads_dir).await?;
+    let archive = downloads_dir.join(format!("temurin-{feature}.bin"));
 
     let mut last_err = None;
     for image_type in ["jre", "jdk"] {
@@ -298,10 +318,10 @@ pub async fn install_temurin(
     }
 }
 
-/// Delete a runtime mcse installed. Refuses to touch anything outside the
-/// managed runtimes dir. Returns the removed directory.
-pub async fn remove_managed(root: &Path, feature: u32) -> Result<PathBuf> {
-    let dir = paths::runtimes_dir(root).join(format!("temurin-{feature}"));
+/// Delete a runtime mcse installed under `runtimes_dir`. Returns the
+/// removed directory.
+pub async fn remove_managed(runtimes_dir: &Path, feature: u32) -> Result<PathBuf> {
+    let dir = runtimes_dir.join(format!("temurin-{feature}"));
     if !dir.is_dir() {
         return Err(Error::InvalidInput(format!(
             "java {feature} is not installed by mcse"
@@ -415,14 +435,30 @@ mod tests {
 
     #[tokio::test]
     async fn remove_managed_only_managed_dirs() {
-        let root = tempfile::tempdir().unwrap();
-        let dir = paths::runtimes_dir(root.path()).join("temurin-21");
+        let runtimes = tempfile::tempdir().unwrap();
+        let dir = runtimes.path().join("temurin-21");
         tokio::fs::create_dir_all(&dir).await.unwrap();
-        remove_managed(root.path(), 21).await.unwrap();
+        remove_managed(runtimes.path(), 21).await.unwrap();
         assert!(!dir.exists());
         // Not installed → error, and no directory gets created.
-        assert!(remove_managed(root.path(), 17).await.is_err());
-        assert!(!paths::runtimes_dir(root.path()).join("temurin-17").exists());
+        assert!(remove_managed(runtimes.path(), 17).await.is_err());
+        assert!(!runtimes.path().join("temurin-17").exists());
+    }
+
+    #[tokio::test]
+    #[cfg(unix)]
+    async fn detects_nested_managed_runtime() {
+        let root = tempfile::tempdir().unwrap();
+        let home = root.path().join("temurin-21/jdk-21.0.3");
+        let bin = java_binary(&home);
+        std::fs::create_dir_all(bin.parent().unwrap()).unwrap();
+        std::fs::write(&bin, "#!/bin/sh\necho 'openjdk version \"21.0.3\"' >&2\n").unwrap();
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&bin, std::fs::Permissions::from_mode(0o755)).unwrap();
+        let found = detect_runtimes(root.path()).await;
+        assert!(found
+            .iter()
+            .any(|r| r.major == 21 && r.managed && r.path == bin));
     }
 
     #[test]

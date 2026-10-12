@@ -29,6 +29,8 @@ pub struct CreateRequest {
 
 pub struct Manager {
     pub data_dir: PathBuf,
+    pub runtimes_dir: PathBuf,
+    pub backups_dir: PathBuf,
     store: RwLock<Store>,
     running: RwLock<HashMap<Uuid, Arc<ServerHandle>>>,
     events: broadcast::Sender<Event>,
@@ -37,11 +39,37 @@ pub struct Manager {
 
 impl Manager {
     pub fn new(data_dir: PathBuf) -> Result<Arc<Manager>> {
+        Self::with_dirs(data_dir, None, None)
+    }
+
+    /// `runtimes_dir`/`backups_dir` default to `<data_dir>/runtimes` and
+    /// `<data_dir>/backups`; each can also be set through
+    /// `$MCSE_RUNTIMES_DIR`/`$MCSE_BACKUPS_DIR`.
+    pub fn with_dirs(
+        data_dir: PathBuf,
+        runtimes_dir: Option<PathBuf>,
+        backups_dir: Option<PathBuf>,
+    ) -> Result<Arc<Manager>> {
+        let runtimes_dir = paths::configured_dir(
+            runtimes_dir,
+            "MCSE_RUNTIMES_DIR",
+            paths::runtimes_dir(&data_dir),
+        );
+        let backups_dir = paths::configured_dir(
+            backups_dir,
+            "MCSE_BACKUPS_DIR",
+            paths::backups_dir(&data_dir),
+        );
         std::fs::create_dir_all(&data_dir)?;
         std::fs::create_dir_all(paths::instances_dir(&data_dir))?;
-        std::fs::create_dir_all(paths::backups_dir(&data_dir))?;
-        std::fs::create_dir_all(paths::runtimes_dir(&data_dir))?;
+        std::fs::create_dir_all(&backups_dir)?;
+        std::fs::create_dir_all(&runtimes_dir)?;
         std::fs::create_dir_all(paths::downloads_dir(&data_dir))?;
+        // Detection results and pinned instance paths are canonical, so
+        // keep these canonical too or starts_with comparisons diverge.
+        let data_dir = dunce::canonicalize(&data_dir).unwrap_or(data_dir);
+        let runtimes_dir = dunce::canonicalize(&runtimes_dir).unwrap_or(runtimes_dir);
+        let backups_dir = dunce::canonicalize(&backups_dir).unwrap_or(backups_dir);
         let (events, _) = broadcast::channel(2048);
         Ok(Arc::new(Manager {
             store: RwLock::new(Store::load(&data_dir)?),
@@ -53,6 +81,8 @@ impl Manager {
                 .read_timeout(Duration::from_secs(120))
                 .build()?,
             data_dir,
+            runtimes_dir,
+            backups_dir,
         }))
     }
 
@@ -222,7 +252,7 @@ impl Manager {
         jar: &std::path::Path,
         args: &[String],
     ) -> Result<()> {
-        let runtimes = java::detect_runtimes(&self.data_dir).await;
+        let runtimes = java::detect_runtimes(&self.runtimes_dir).await;
         let java = java::pick_runtime(&runtimes, 8)
             .or_else(|| runtimes.first())
             .ok_or(Error::NoJava {
@@ -273,7 +303,7 @@ impl Manager {
             if inst.dir.starts_with(&instances_root) {
                 let _ = tokio::fs::remove_dir_all(&inst.dir).await;
             }
-            let backup_dir = paths::backups_dir(&self.data_dir).join(id.to_string());
+            let backup_dir = self.backups_dir.join(id.to_string());
             let _ = tokio::fs::remove_dir_all(&backup_dir).await;
         }
         Ok(())
@@ -284,7 +314,7 @@ impl Manager {
         let java_path = match &inst.java_path {
             Some(p) => PathBuf::from(p),
             None => {
-                let runtimes = java::detect_runtimes(&self.data_dir).await;
+                let runtimes = java::detect_runtimes(&self.runtimes_dir).await;
                 java::pick_runtime(&runtimes, required)
                     .ok_or_else(|| Error::NoJava {
                         required,
@@ -416,7 +446,7 @@ impl Manager {
 
     pub async fn list_backups(&self, id: Uuid) -> Result<Vec<BackupMeta>> {
         let inst = self.instance(id).await?;
-        backup::list(&self.data_dir, &inst).await
+        backup::list(&self.backups_dir, &inst).await
     }
 
     pub async fn create_backup(&self, id: Uuid) -> Result<BackupMeta> {
@@ -427,11 +457,11 @@ impl Manager {
             let _ = h.send_command("save-off").await;
             let _ = h.send_command("save-all").await;
             tokio::time::sleep(Duration::from_secs(2)).await;
-            let meta = backup::create(&self.data_dir, &inst).await;
+            let meta = backup::create(&self.backups_dir, &inst).await;
             let _ = h.send_command("save-on").await;
             meta?
         } else {
-            backup::create(&self.data_dir, &inst).await?
+            backup::create(&self.backups_dir, &inst).await?
         };
         let _ = self.events.send(Event::BackupCreated {
             id,
@@ -442,7 +472,7 @@ impl Manager {
 
     pub async fn delete_backup(&self, id: Uuid, name: &str) -> Result<()> {
         let inst = self.instance(id).await?;
-        backup::remove(&self.data_dir, &inst, name).await
+        backup::remove(&self.backups_dir, &inst, name).await
     }
 
     pub async fn restore_backup(self: &Arc<Self>, id: Uuid, name: &str) -> Result<()> {
@@ -451,7 +481,7 @@ impl Manager {
             self.stop_internal(id, true).await;
             self.reap(id).await;
         }
-        backup::restore(&self.data_dir, &inst, name).await
+        backup::restore(&self.backups_dir, &inst, name).await
     }
 
     /// Server-list ping to 127.0.0.1 on the configured port.
@@ -463,7 +493,7 @@ impl Manager {
     }
 
     pub async fn runtimes(&self) -> Vec<JavaRuntime> {
-        java::detect_runtimes(&self.data_dir).await
+        java::detect_runtimes(&self.runtimes_dir).await
     }
 
     pub async fn java_releases(&self) -> Result<Vec<JavaRelease>> {
@@ -481,7 +511,8 @@ impl Manager {
         };
         let rt = java::install_temurin(
             &self.http,
-            &self.data_dir,
+            &self.runtimes_dir,
+            &paths::downloads_dir(&self.data_dir),
             feature,
             |received, total| send("download", received, total),
             |stage| send(stage, 0, None),
@@ -492,7 +523,7 @@ impl Manager {
     }
 
     pub async fn remove_java(&self, feature: u32) -> Result<()> {
-        let removed = java::remove_managed(&self.data_dir, feature).await?;
+        let removed = java::remove_managed(&self.runtimes_dir, feature).await?;
         // Instances pinned to a java under the removed dir fall back to
         // auto-detect instead of failing to launch.
         let mut store = self.store.write().await;
@@ -561,4 +592,36 @@ pub struct InstancePatch {
     pub max_ram_mb: Option<u32>,
     pub jvm_args: Option<Vec<String>>,
     pub java_path: Option<Option<String>>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn with_dirs_honors_custom_locations() {
+        let data = tempfile::tempdir().unwrap();
+        let runtimes = tempfile::tempdir().unwrap().path().join("jre");
+        let backups = tempfile::tempdir().unwrap().path().join("zips");
+        let mgr = Manager::with_dirs(
+            data.path().to_path_buf(),
+            Some(runtimes.clone()),
+            Some(backups.clone()),
+        )
+        .unwrap();
+        assert_eq!(mgr.runtimes_dir, runtimes.canonicalize().unwrap());
+        assert_eq!(mgr.backups_dir, backups.canonicalize().unwrap());
+        assert!(runtimes.is_dir());
+        assert!(backups.is_dir());
+        assert!(paths::instances_dir(&mgr.data_dir).is_dir());
+    }
+
+    #[test]
+    fn new_defaults_dirs_under_data_dir() {
+        let data = tempfile::tempdir().unwrap();
+        let mgr = Manager::new(data.path().to_path_buf()).unwrap();
+        let canon = |p: PathBuf| p.canonicalize().unwrap();
+        assert_eq!(mgr.runtimes_dir, canon(paths::runtimes_dir(data.path())));
+        assert_eq!(mgr.backups_dir, canon(paths::backups_dir(data.path())));
+    }
 }

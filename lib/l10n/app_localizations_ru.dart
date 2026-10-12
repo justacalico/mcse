@@ -68,6 +68,28 @@ class AppLocalizationsRu extends AppLocalizations {
   String get dataDir => 'Каталог данных';
 
   @override
+  String get storageTitle => 'Хранилище';
+
+  @override
+  String get javaDir => 'Каталог установки Java';
+
+  @override
+  String get backupsDir => 'Каталог копий';
+
+  @override
+  String get dirDialogHint =>
+      'Файлы не перемещаются. Новое расположение применяется после перезапуска mcse.';
+
+  @override
+  String get browseDir => 'Обзор';
+
+  @override
+  String get useDefaultDir => 'По умолчанию';
+
+  @override
+  String get dirPendingRestart => 'применится после перезапуска';
+
+  @override
   String get javaTitle => 'Java';
 
   @override
