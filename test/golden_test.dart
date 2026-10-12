@@ -115,14 +115,19 @@ void main() {
   });
 
   testWidgets('about page', (tester) async {
-    await snap(
-        tester,
-        'about',
-        testApp(FakeBackend(),
-            updateState: stubUpdateState(
-                result: const AppUpdate(
-                    currentVersion: '1.0.0',
-                    latestVersion: '1.0.0',
-                    updateAvailable: false))));
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(testApp(FakeBackend(),
+        updateState: stubUpdateState(
+            result: const AppUpdate(
+                currentVersion: '1.0.0',
+                latestVersion: '1.0.0',
+                updateAvailable: false))));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('About'));
+    await tester.pumpAndSettle();
+    await expectLater(find.byType(MaterialApp),
+        matchesGoldenFile('goldens/about.png'));
   });
 }

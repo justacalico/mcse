@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mcse/models/app_update.dart';
 import 'package:mcse/state/update_state.dart';
@@ -18,6 +19,8 @@ void main() {
 
   testWidgets('shows version and links', (tester) async {
     await openAbout(tester, FakeBackend());
+    expect(
+        find.image(const AssetImage('assets/icon.png')), findsOneWidget);
     expect(find.text('mcse'), findsNWidgets(2));
     expect(find.text('1.0.0'), findsOneWidget);
     expect(find.text('Check for updates'), findsOneWidget);

@@ -58,7 +58,7 @@ class _AboutPageState extends State<AboutPage> {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          const Icon(Icons.grid_on, size: 64),
+          Image.asset('assets/icon.png', width: 64, height: 64),
           const SizedBox(height: 12),
           Text('mcse',
               textAlign: TextAlign.center,
