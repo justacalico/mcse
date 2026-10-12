@@ -19,14 +19,27 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _index = 0;
   String? _shownError;
+  final _serversNav = GlobalKey<NavigatorState>();
+
+  void _select(int i) {
+    if (i == 0 && _index == 0) {
+      _serversNav.currentState?.popUntil((route) => route.isFirst);
+    }
+    setState(() => _index = i);
+  }
 
   @override
   Widget build(BuildContext context) {
-    const pages = [
-      ServersPage(),
-      CreatePage(),
-      SettingsPage(),
-      AboutPage(),
+    final pages = [
+      Navigator(
+        key: _serversNav,
+        onGenerateRoute: (_) => MaterialPageRoute(
+          builder: (_) => const ServersPage(),
+        ),
+      ),
+      const CreatePage(),
+      const SettingsPage(),
+      const AboutPage(),
     ];
     final lastError = context.watch<AppState>().lastError;
     if (lastError != null && lastError != _shownError) {
@@ -47,7 +60,7 @@ class _HomePageState extends State<HomePage> {
               children: [
                 NavigationRail(
                   selectedIndex: _index,
-                  onDestinationSelected: (i) => setState(() => _index = i),
+                  onDestinationSelected: _select,
                   labelType: NavigationRailLabelType.all,
                   destinations: [
                     NavigationRailDestination(
@@ -79,7 +92,7 @@ class _HomePageState extends State<HomePage> {
       bottomNavigationBar: narrow
           ? NavigationBar(
               selectedIndex: _index,
-              onDestinationSelected: (i) => setState(() => _index = i),
+              onDestinationSelected: _select,
               destinations: [
                 NavigationDestination(
                   icon: const Icon(Icons.dns_outlined),
