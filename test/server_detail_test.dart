@@ -61,7 +61,8 @@ void main() {
   testWidgets('send button submits command, empty is ignored',
       (tester) async {
     final backend = FakeBackend();
-    await openDetail(tester, backend);
+    await openDetail(tester, backend,
+        server: testServer(status: ServerStatus.running));
     await tester.tap(find.byTooltip('Send'));
     await tester.pump();
     expect(backend.calls.where((c) => c.startsWith('cmd:')), isEmpty);
@@ -71,6 +72,28 @@ void main() {
     await tester.tap(find.byTooltip('Send'));
     await tester.pump();
     expect(backend.calls, contains('cmd:srv-1:time set day'));
+  });
+
+  testWidgets('command input disabled when stopped', (tester) async {
+    final backend = FakeBackend();
+    await openDetail(tester, backend);
+    final field = tester.widget<TextField>(
+        find.widgetWithText(TextField, 'Enter a server command…'));
+    expect(field.enabled, isFalse);
+    final send = tester.widget<IconButton>(
+        find.ancestor(
+            of: find.byIcon(Icons.send),
+            matching: find.byType(IconButton)));
+    expect(send.onPressed, isNull);
+    backend.emit(const BackendEvent(EventKind.status,
+        id: 'srv-1', status: 'running'));
+    await tester.pumpAndSettle();
+    expect(
+        tester
+            .widget<TextField>(find.widgetWithText(
+                TextField, 'Enter a server command…'))
+            .enabled,
+        isTrue);
   });
 
   testWidgets('empty console placeholder', (tester) async {

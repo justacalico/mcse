@@ -45,7 +45,9 @@ class _ConsoleTabState extends State<ConsoleTab> {
 
   @override
   Widget build(BuildContext context) {
-    final lines = context.watch<AppState>().logOf(widget.serverId);
+    final app = context.watch<AppState>();
+    final lines = app.logOf(widget.serverId);
+    final online = app.instanceById(widget.serverId)?.isOnline ?? false;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_atBottom && _scroll.hasClients) {
         _scroll.jumpTo(_scroll.position.maxScrollExtent);
@@ -83,6 +85,7 @@ class _ConsoleTabState extends State<ConsoleTab> {
               Expanded(
                 child: TextField(
                   controller: _command,
+                  enabled: online,
                   style: const TextStyle(fontFamily: 'JetBrainsMono'),
                   decoration: InputDecoration(
                     hintText: AppLocalizations.of(context).commandHint,
@@ -96,7 +99,7 @@ class _ConsoleTabState extends State<ConsoleTab> {
               IconButton.filled(
                 tooltip: AppLocalizations.of(context).send,
                 icon: const Icon(Icons.send),
-                onPressed: _send,
+                onPressed: online ? _send : null,
               ),
             ],
           ),
