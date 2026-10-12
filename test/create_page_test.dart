@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mcse/backend/backend.dart';
 
 import 'fake_backend.dart';
 import 'helpers.dart';
@@ -32,7 +33,8 @@ void main() {
     final button = find.widgetWithText(FilledButton, 'Create server');
     await scrollTo(tester, button);
     await tester.tap(button);
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump();
   }
 
   Future<void> pickLoader(WidgetTester tester, String label) async {
@@ -41,6 +43,9 @@ void main() {
     await tester.tap(find.text(label).last);
     await tester.pumpAndSettle();
   }
+
+  Finder inDialog(Finder matching) => find.descendant(
+      of: find.byType(AlertDialog), matching: matching);
 
   Future<void> pickVersion(WidgetTester tester) async {
     await tester.tap(find.byType(DropdownButtonFormField<String>).last);
@@ -90,6 +95,95 @@ void main() {
     await acceptEula(tester);
     await tapCreate(tester);
     expect(backend.calls, contains('createInstance'));
+  });
+
+  testWidgets('shows progress dialog and closes it when created',
+      (tester) async {
+    final backend = FakeBackend();
+    await openCreate(tester, backend);
+    await pickLoader(tester, 'Paper');
+    await pickVersion(tester);
+    await acceptEula(tester);
+    await tapCreate(tester);
+
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(inDialog(find.text('Creating server…')), findsOneWidget);
+
+    backend.emit(const BackendEvent(EventKind.download,
+        id: 'new-id', received: 524288, total: 1048576));
+    await tester.pump();
+    expect(inDialog(find.textContaining('0.5 / 1.0 MB')),
+        findsOneWidget);
+
+    backend.emit(const BackendEvent(EventKind.created, id: 'new-id'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+  });
+
+  testWidgets('creation failure shows error in dialog', (tester) async {
+    final backend = FakeBackend();
+    await openCreate(tester, backend);
+    await pickLoader(tester, 'Paper');
+    await pickVersion(tester);
+    await acceptEula(tester);
+    await tapCreate(tester);
+
+    backend.emit(const BackendEvent(EventKind.error,
+        id: 'new-id', message: 'disk full'));
+    await tester.pump();
+    expect(
+        inDialog(find.text('Server creation failed')), findsOneWidget);
+    expect(inDialog(find.text('disk full')), findsOneWidget);
+
+    await tester.tap(inDialog(find.text('Dismiss')));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+    final button = find.widgetWithText(FilledButton, 'Create server');
+    await scrollTo(tester, button);
+    expect(tester.widget<FilledButton>(button).onPressed, isNotNull);
+  });
+
+  testWidgets('create button stays disabled while creation is in flight',
+      (tester) async {
+    final backend = FakeBackend();
+    await openCreate(tester, backend);
+    await pickLoader(tester, 'Paper');
+    await pickVersion(tester);
+    await acceptEula(tester);
+    await tapCreate(tester);
+    expect(find.byType(AlertDialog), findsOneWidget);
+
+    await tester.tapAt(const Offset(400, 580));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byType(AlertDialog), findsNothing);
+
+    final disabled = find.widgetWithText(FilledButton, 'Creating…');
+    await scrollTo(tester, disabled);
+    expect(tester.widget<FilledButton>(disabled).onPressed, isNull);
+
+    backend.emit(const BackendEvent(EventKind.created, id: 'new-id'));
+    await tester.pumpAndSettle();
+    final enabled = find.widgetWithText(FilledButton, 'Create server');
+    await scrollTo(tester, enabled);
+    expect(tester.widget<FilledButton>(enabled).onPressed, isNotNull);
+  });
+
+  testWidgets('refuses to create a server with a taken name',
+      (tester) async {
+    final backend = FakeBackend()
+      ..instancesResult = [testServer(name: 'My Server')];
+    await openCreate(tester, backend);
+    await pickLoader(tester, 'Paper');
+    await pickVersion(tester);
+    await scrollTo(tester, find.widgetWithText(TextField, 'Server name'));
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Server name'), 'my server');
+    await acceptEula(tester);
+    await tapCreate(tester);
+    expect(backend.calls.where((c) => c == 'createInstance'), isEmpty);
+    expect(find.text('A server with that name already exists'),
+        findsOneWidget);
   });
 
   testWidgets('create failure shows error', (tester) async {

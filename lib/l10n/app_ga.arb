@@ -37,6 +37,7 @@
   "selectLoader": "Roghnaigh lódálaí",
   "selectGameVersion": "Roghnaigh leagan cluiche",
   "serverName": "Ainm an fhreastalaí",
+  "serverNameTaken": "Tá freastalaí leis an ainm sin ann cheana",
   "memoryMb": "Cuimhne: {amount} MB",
   "motd": "MOTD",
   "port": "Port",

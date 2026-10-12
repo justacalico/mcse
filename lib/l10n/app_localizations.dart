@@ -325,6 +325,12 @@ abstract class AppLocalizations {
   /// **'Server name'**
   String get serverName;
 
+  /// No description provided for @serverNameTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'A server with that name already exists'**
+  String get serverNameTaken;
+
   /// No description provided for @memoryMb.
   ///
   /// In en, this message translates to:
