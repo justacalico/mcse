@@ -17,6 +17,9 @@ void main() {
     expect(ping.versionName, '1.21');
     const rt = JavaRuntimeInfo('/bin/java', '21', 21);
     expect(rt.path, '/bin/java');
+    final release = JavaReleaseInfo(21, true);
+    expect(release.feature, 21);
+    expect(release.lts, isTrue);
     const backupName = 'b.zip';
     final backup = BackupInfo(backupName, 5, DateTime(0));
     expect(backup.sizeBytes, 5);

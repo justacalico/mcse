@@ -166,6 +166,48 @@ void main() {
     expect(backend.calls, contains('restoreBackup:srv-1:backup-1.zip'));
   });
 
+  testWidgets('backups create shows busy label', (tester) async {
+    final backend = FakeBackend();
+    await openDetail(tester, backend);
+    await tester.tap(find.text('Backups'));
+    await tester.pumpAndSettle();
+    backend.delay = const Duration(milliseconds: 50);
+    await tester.tap(find.widgetWithText(FilledButton, 'Create backup'));
+    await tester.pump();
+    expect(find.text('Working…'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(backend.calls, contains('createBackup:srv-1'));
+  });
+
+  testWidgets('properties save shows saving label', (tester) async {
+    final backend = FakeBackend();
+    await openDetail(tester, backend);
+    await tester.tap(find.text('Properties'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+        find.widgetWithText(TextField, 'server-port'), '25566');
+    backend.delay = const Duration(milliseconds: 50);
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pump();
+    expect(find.text('Saving…'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(
+        backend.calls, contains('setProps:srv-1:{server-port: 25566}'));
+  });
+
+  testWidgets('settings save shows saving label', (tester) async {
+    final backend = FakeBackend();
+    await openDetail(tester, backend);
+    await tester.tap(find.widgetWithText(Tab, 'Settings'));
+    await tester.pumpAndSettle();
+    backend.delay = const Duration(milliseconds: 50);
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pump();
+    expect(find.text('Saving…'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(backend.calls, contains('update:srv-1'));
+  });
+
   testWidgets('restore cancel does nothing', (tester) async {
     final backend = FakeBackend();
     await openDetail(tester, backend);

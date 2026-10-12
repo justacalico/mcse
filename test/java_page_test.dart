@@ -95,6 +95,27 @@ void main() {
     expect(find.textContaining('download failed'), findsOneWidget);
   });
 
+  testWidgets('remove failure shows a snackbar', (tester) async {
+    final backend = FakeBackend()
+      ..runtimesResult = const [
+        JavaRuntimeInfo('/data/mcse/runtimes/temurin-21/bin/java',
+            '21.0.5', 21,
+            managed: true),
+      ];
+    await openJavaPage(tester, backend);
+    backend.callErrors['removeJava:21'] = Exception('in use');
+    await tester.tap(find.byTooltip('Remove'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Java remove failed'), findsOneWidget);
+  });
+
+  testWidgets('runtimes load failure shows empty state', (tester) async {
+    final backend = FakeBackend()
+      ..callErrors['runtimes'] = Exception('jdk probe failed');
+    await openJavaPage(tester, backend);
+    expect(find.text('No Java runtimes found.'), findsOneWidget);
+  });
+
   testWidgets('releases load failure offers retry', (tester) async {
     final backend = FakeBackend()
       ..callErrors['javaReleases'] = Exception('offline');

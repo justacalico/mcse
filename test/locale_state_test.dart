@@ -60,6 +60,11 @@ void main() {
         enGb.replaceAll('"@@locale": "en_GB"', ''));
   });
 
+  test('unsupported locale lookup throws', () {
+    expect(() => lookupAppLocalizations(const Locale('fr')),
+        throwsA(isA<FlutterError>()));
+  });
+
   testWidgets('every supported locale provides translations',
       (tester) async {
     for (final locale in AppLocalizations.supportedLocales) {
@@ -69,16 +74,122 @@ void main() {
       await tester.pumpAndSettle();
       final element = tester.element(find.byType(Scaffold).first);
       final l10n = AppLocalizations.of(element);
-      expect(l10n.navServers, isNotEmpty);
-      expect(l10n.createServerTitle, isNotEmpty);
-      expect(l10n.statusRunning, isNotEmpty);
-      expect(l10n.storageTitle, isNotEmpty);
-      expect(l10n.javaDir, isNotEmpty);
-      expect(l10n.backupsDir, isNotEmpty);
-      expect(l10n.dirDialogHint, isNotEmpty);
-      expect(l10n.browseDir, isNotEmpty);
-      expect(l10n.useDefaultDir, isNotEmpty);
-      expect(l10n.dirPendingRestart, isNotEmpty);
+      final strings = [
+        l10n.navServers,
+        l10n.navCreate,
+        l10n.navSettings,
+        l10n.navAbout,
+        l10n.noServersYet,
+        l10n.noServersHint,
+        l10n.creatingServer,
+        l10n.createFailed,
+        l10n.dismiss,
+        l10n.downloadingProgress('1', '2'),
+        l10n.downloadingSimple('1'),
+        l10n.unknownError,
+        l10n.appearance,
+        l10n.themeSystem,
+        l10n.themeLight,
+        l10n.themeDark,
+        l10n.themeOled,
+        l10n.dataDir,
+        l10n.storageTitle,
+        l10n.javaDir,
+        l10n.backupsDir,
+        l10n.dirDialogHint,
+        l10n.browseDir,
+        l10n.useDefaultDir,
+        l10n.dirPendingRestart,
+        l10n.javaTitle,
+        l10n.javaRuntimes,
+        l10n.runtimesDetected('2'),
+        l10n.language,
+        l10n.languageSystem,
+        l10n.aboutTagline,
+        l10n.version,
+        l10n.checkForUpdates,
+        l10n.checkFailed,
+        l10n.updateAvailable('1.2.3'),
+        l10n.upToDate,
+        l10n.checkReleasesHint,
+        l10n.sourceCode,
+        l10n.createServerTitle,
+        l10n.loader,
+        l10n.loadersFailed('x'),
+        l10n.selectLoader,
+        l10n.selectGameVersion,
+        l10n.serverName,
+        l10n.serverNameTaken,
+        l10n.memoryMb('1024'),
+        l10n.motd,
+        l10n.port,
+        l10n.acceptEula,
+        l10n.eulaRequired,
+        l10n.creating,
+        l10n.defaultMotd,
+        l10n.defaultServerName,
+        l10n.serverNotFound,
+        l10n.start,
+        l10n.stop,
+        l10n.kill,
+        l10n.restart,
+        l10n.deleteServerTooltip,
+        l10n.tabConsole,
+        l10n.tabProperties,
+        l10n.tabBackups,
+        l10n.deleteServerTitle,
+        l10n.deleteServerBody('s'),
+        l10n.cancel,
+        l10n.delete,
+        l10n.noConsoleOutput,
+        l10n.commandHint,
+        l10n.send,
+        l10n.propertiesSaved,
+        l10n.saveFailed('x'),
+        l10n.saving,
+        l10n.save,
+        l10n.propsLoadFailed('x'),
+        l10n.backupFailed('x'),
+        l10n.restoreTitle,
+        l10n.restoreBody('b'),
+        l10n.restore,
+        l10n.backupsLoadFailed('x'),
+        l10n.working,
+        l10n.createBackup,
+        l10n.noBackups,
+        l10n.nameLabel,
+        l10n.minRam,
+        l10n.maxRam,
+        l10n.jvmArgs,
+        l10n.javaRuntime,
+        l10n.javaAuto,
+        l10n.settingsSaved,
+        l10n.sizeMb('1.0'),
+        l10n.downloads,
+        l10n.releasesLoadFailed,
+        l10n.retry,
+        l10n.detectedRuntimes,
+        l10n.noRuntimes,
+        l10n.javaInstallFailed('x'),
+        l10n.javaRemoveFailed('x'),
+        l10n.installed,
+        l10n.install,
+        l10n.remove,
+        l10n.extracting,
+        l10n.javaProgressTotal('1', '2'),
+        l10n.javaProgressMb('1'),
+        l10n.javaRuntimeVersion('21', '21.0.3'),
+        l10n.javaFeature('21'),
+        l10n.javaRuntimePath('21', '/bin/java'),
+        l10n.statusRunning,
+        l10n.statusStarting,
+        l10n.statusStopping,
+        l10n.statusStopped,
+        l10n.statusCrashed,
+      ];
+      for (final s in strings) {
+        expect(s, isNotEmpty, reason: '$locale');
+      }
     }
   });
 
