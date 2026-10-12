@@ -126,12 +126,15 @@ class _PropertiesTabState extends State<PropertiesTab> {
         ),
         Padding(
           padding: const EdgeInsets.all(8),
-          child: FilledButton.icon(
-            icon: const Icon(Icons.save),
-            label: Text(_saving
-                ? AppLocalizations.of(context).saving
-                : AppLocalizations.of(context).save),
-            onPressed: _saving ? null : _save,
+          child: SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              icon: const Icon(Icons.save),
+              label: Text(_saving
+                  ? AppLocalizations.of(context).saving
+                  : AppLocalizations.of(context).save),
+              onPressed: _saving ? null : _save,
+            ),
           ),
         ),
       ],
