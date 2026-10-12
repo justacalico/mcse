@@ -131,6 +131,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serverName => 'Server name';
 
   @override
+  String get serverNameTaken => 'A server with that name already exists';
+
+  @override
   String memoryMb(Object amount) {
     return 'Memory: $amount MB';
   }
@@ -483,6 +486,9 @@ class AppLocalizationsEnGb extends AppLocalizationsEn {
 
   @override
   String get serverName => 'Server name';
+
+  @override
+  String get serverNameTaken => 'A server with that name already exists';
 
   @override
   String memoryMb(Object amount) {

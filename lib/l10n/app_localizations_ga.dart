@@ -132,6 +132,9 @@ class AppLocalizationsGa extends AppLocalizations {
   String get serverName => 'Ainm an fhreastalaí';
 
   @override
+  String get serverNameTaken => 'Tá freastalaí leis an ainm sin ann cheana';
+
+  @override
   String memoryMb(Object amount) {
     return 'Cuimhne: $amount MB';
   }

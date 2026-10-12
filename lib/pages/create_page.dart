@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../backend/backend.dart';
 import '../l10n/app_localizations.dart';
 import '../state/app_state.dart';
+import '../widgets/creating_progress.dart';
 
 /// Wizard: pick a loader → pick a game version → name + memory → create.
 class CreatePage extends StatefulWidget {
@@ -31,6 +32,7 @@ class _CreatePageState extends State<CreatePage> {
   double _ram = 4096;
   String? _error;
   bool _submitting = false;
+  String? _creatingId;
 
   @override
   void initState() {
@@ -83,16 +85,22 @@ class _CreatePageState extends State<CreatePage> {
   }
 
   Future<void> _create() async {
-    final backend = context.read<AppState>().backend;
+    final l10n = AppLocalizations.of(context);
+    final app = context.read<AppState>();
+    final name = _name.text.trim().isEmpty
+        ? l10n.defaultServerName
+        : _name.text.trim();
+    if (app.nameTaken(name)) {
+      setState(() => _error = l10n.serverNameTaken);
+      return;
+    }
     setState(() {
       _submitting = true;
       _error = null;
     });
     try {
-      await backend.createInstance(CreateRequest(
-        name: _name.text.trim().isEmpty
-            ? AppLocalizations.of(context).defaultServerName
-            : _name.text.trim(),
+      final id = await app.createInstance(CreateRequest(
+        name: name,
         loader: _loader!,
         gameVersion: _version!,
         minRamMb: _ram ~/ 2,
@@ -102,7 +110,20 @@ class _CreatePageState extends State<CreatePage> {
           'server-port': _port.text,
         },
       ));
-      if (mounted) setState(() => _submitting = false);
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _creatingId = id;
+      });
+      await showDialog<void>(
+        context: context,
+        builder: (_) => _CreatingDialog(id: id),
+      );
+      if (!mounted) return;
+      if (app.creating[id]?.failed ?? false) app.dismissCreate(id);
+      if (!app.creating.containsKey(id)) {
+        setState(() => _creatingId = null);
+      }
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -116,8 +137,13 @@ class _CreatePageState extends State<CreatePage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final progress = _creatingId == null
+        ? null
+        : context.watch<AppState>().creating[_creatingId];
+    final inFlight = progress != null && !progress.failed;
+    final busy = _submitting || inFlight;
     final canCreate =
-        _loader != null && _version != null && _eula && !_submitting;
+        _loader != null && _version != null && _eula && !busy;
     return Scaffold(
       appBar: AppBar(title: Text(l10n.createServerTitle)),
       body: ListView(
@@ -233,10 +259,37 @@ class _CreatePageState extends State<CreatePage> {
           const SizedBox(height: 8),
           FilledButton.icon(
             icon: const Icon(Icons.rocket_launch),
-            label: Text(_submitting ? l10n.creating : l10n.createServerTitle),
+            label: Text(busy ? l10n.creating : l10n.createServerTitle),
             onPressed: canCreate ? _create : null,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Tracks one in-flight creation: closes itself when the progress entry
+/// goes away (instance registered or dismissed after a failure).
+class _CreatingDialog extends StatelessWidget {
+  final String id;
+
+  const _CreatingDialog({required this.id});
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = context.watch<AppState>().creating[id];
+    if (progress == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted && Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        }
+      });
+      return const SizedBox.shrink();
+    }
+    return AlertDialog(
+      content: SizedBox(
+        width: 420,
+        child: CreatingProgress(id: id, progress: progress),
       ),
     );
   }

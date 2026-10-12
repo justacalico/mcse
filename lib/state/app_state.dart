@@ -9,6 +9,7 @@ const _installCap = 200;
 
 /// Download progress for an in-flight instance creation.
 class CreateProgress {
+  final String? name;
   final int received;
   final int? total;
   final List<String> installLines;
@@ -16,6 +17,7 @@ class CreateProgress {
   final String? error;
 
   const CreateProgress({
+    this.name,
     this.received = 0,
     this.total,
     this.installLines = const [],
@@ -93,6 +95,7 @@ class AppState extends ChangeNotifier {
         final prev = creating[e.id!];
         if (prev != null && prev.failed) return;
         creating[e.id!] = CreateProgress(
+          name: prev?.name,
           received: e.received ?? 0,
           total: e.total,
           installLines: prev?.installLines ?? const [],
@@ -103,6 +106,7 @@ class AppState extends ChangeNotifier {
         final prev = creating[e.id!];
         final lines = [...?prev?.installLines, e.line!];
         creating[e.id!] = CreateProgress(
+          name: prev?.name,
           received: prev?.received ?? 0,
           total: prev?.total,
           installLines: lines.length > _installCap
@@ -130,8 +134,10 @@ class AppState extends ChangeNotifier {
         notifyListeners();
       case EventKind.error:
         if (e.id != null && creating.containsKey(e.id)) {
-          creating[e.id!] =
-              CreateProgress(failed: true, error: e.message);
+          creating[e.id!] = CreateProgress(
+              name: creating[e.id!]?.name,
+              failed: true,
+              error: e.message);
         }
         lastError = e.message;
         notifyListeners();
@@ -156,6 +162,24 @@ class AppState extends ChangeNotifier {
       lastError = e.toString();
     }
     notifyListeners();
+  }
+
+  /// True when a live or in-flight instance already uses this name.
+  bool nameTaken(String name) {
+    final normalized = name.trim().toLowerCase();
+    return instances
+            .any((i) => i.name.trim().toLowerCase() == normalized) ||
+        creating.values
+            .any((p) => p.name?.trim().toLowerCase() == normalized);
+  }
+
+  /// Kicks off creation and seeds a progress entry so the UI has something
+  /// to show before the first download event arrives. Returns the new id.
+  Future<String> createInstance(CreateRequest request) async {
+    final id = await backend.createInstance(request);
+    creating[id] = CreateProgress(name: request.name);
+    notifyListeners();
+    return id;
   }
 
   void dismissCreate(String id) {

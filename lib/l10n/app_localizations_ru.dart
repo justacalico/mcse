@@ -131,6 +131,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get serverName => 'Имя сервера';
 
   @override
+  String get serverNameTaken => 'Сервер с таким именем уже существует';
+
+  @override
   String memoryMb(Object amount) {
     return 'Память: $amount МБ';
   }

@@ -37,6 +37,7 @@
   "selectLoader": "选择加载器",
   "selectGameVersion": "选择游戏版本",
   "serverName": "服务器名称",
+  "serverNameTaken": "同名服务器已存在",
   "memoryMb": "内存：{amount} MB",
   "motd": "MOTD",
   "port": "端口",

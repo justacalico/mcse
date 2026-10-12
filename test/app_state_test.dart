@@ -78,6 +78,39 @@ void main() {
     expect(state.creating, isEmpty);
   });
 
+  test('createInstance seeds a named progress entry', () async {
+    final id = await state.createInstance(const CreateRequest(
+        name: 'My Server', loader: 'paper', gameVersion: '1.21.1'));
+    expect(id, 'new-id');
+    expect(backend.calls, contains('createInstance'));
+    expect(state.creating['new-id']?.name, 'My Server');
+    expect(state.creating['new-id']?.failed, isFalse);
+
+    backend.emit(const BackendEvent(EventKind.download,
+        id: 'new-id', received: 5, total: 10));
+    await pumpEventQueue();
+    expect(state.creating['new-id']?.name, 'My Server');
+    expect(state.creating['new-id']?.fraction, 0.5);
+
+    backend.emit(const BackendEvent(EventKind.error,
+        id: 'new-id', message: 'boom'));
+    await pumpEventQueue();
+    expect(state.creating['new-id']?.name, 'My Server');
+    expect(state.creating['new-id']?.failed, isTrue);
+  });
+
+  test('nameTaken matches instances and in-flight creations', () async {
+    backend.instancesResult = [testServer(name: 'Existing')];
+    await state.refresh();
+    expect(state.nameTaken('existing'), isTrue);
+    expect(state.nameTaken(' Existing '), isTrue);
+    expect(state.nameTaken('other'), isFalse);
+
+    await state.createInstance(const CreateRequest(
+        name: 'In Flight', loader: 'paper', gameVersion: '1.21.1'));
+    expect(state.nameTaken('in flight'), isTrue);
+  });
+
   test('created event refreshes and clears progress', () async {
     backend.emit(const BackendEvent(EventKind.download, id: 'srv-1'));
     backend.instancesResult = [testServer()];

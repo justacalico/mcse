@@ -37,6 +37,7 @@
   "selectLoader": "Select a loader",
   "selectGameVersion": "Select a game version",
   "serverName": "Server name",
+  "serverNameTaken": "A server with that name already exists",
   "memoryMb": "Memory: {amount} MB",
   "motd": "MOTD",
   "port": "Port",

@@ -37,6 +37,7 @@
   "selectLoader": "Выберите загрузчик",
   "selectGameVersion": "Выберите версию игры",
   "serverName": "Имя сервера",
+  "serverNameTaken": "Сервер с таким именем уже существует",
   "memoryMb": "Память: {amount} МБ",
   "motd": "MOTD",
   "port": "Порт",

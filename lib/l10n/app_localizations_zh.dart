@@ -131,6 +131,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get serverName => '服务器名称';
 
   @override
+  String get serverNameTaken => '同名服务器已存在';
+
+  @override
   String memoryMb(Object amount) {
     return '内存：$amount MB';
   }
