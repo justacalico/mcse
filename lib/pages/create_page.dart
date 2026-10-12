@@ -22,7 +22,6 @@ class _CreatePageState extends State<CreatePage> {
   List<GameVersionInfo>? _versions;
   String? _loader;
   String? _version;
-  bool _stableOnly = true;
   bool _eula = false;
   final _eulaLink = TapGestureRecognizer()
     ..onTap = () => launchUrl(
@@ -71,9 +70,6 @@ class _CreatePageState extends State<CreatePage> {
       }
     }
   }
-
-  Iterable<GameVersionInfo> get _shown =>
-      (_versions ?? []).where((v) => !_stableOnly || v.stable);
 
   Future<void> _create() async {
     final backend = context.read<AppState>().backend;
@@ -137,25 +133,7 @@ class _CreatePageState extends State<CreatePage> {
               },
             ),
           const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: Text('Version',
-                    style: Theme.of(context).textTheme.titleSmall),
-              ),
-              FilterChip(
-                label: const Text('Releases only'),
-                selected: _stableOnly,
-                onSelected: (v) => setState(() {
-                  _stableOnly = v;
-                  if (_version != null &&
-                      !_shown.any((x) => x.id == _version)) {
-                    _version = null;
-                  }
-                }),
-              ),
-            ],
-          ),
+          Text('Version', style: Theme.of(context).textTheme.titleSmall),
           const SizedBox(height: 8),
           if (_loader != null && _versions == null)
             const Center(child: CircularProgressIndicator())
@@ -167,7 +145,7 @@ class _CreatePageState extends State<CreatePage> {
                 hintText: 'Select a game version',
               ),
               items: [
-                for (final v in _shown)
+                for (final v in _versions ?? <GameVersionInfo>[])
                   DropdownMenuItem(value: v.id, child: Text(v.id)),
               ],
               onChanged: (v) => setState(() => _version = v),
