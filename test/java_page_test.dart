@@ -11,6 +11,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Settings'));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Java runtimes'), 200);
     await tester.tap(find.text('Java runtimes'));
     await tester.pumpAndSettle();
   }

@@ -6,6 +6,7 @@ import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
 import 'backend/frb_backend.dart';
+import 'state/dirs_state.dart';
 import 'state/locale_state.dart';
 import 'state/theme_state.dart';
 
@@ -24,7 +25,13 @@ Future<void> main() async {
       await windowManager.focus();
     });
   }
-  final backend = await createBackend();
+  final dirs = await DirsState.load();
+  // A stale or unwritable override must not block app startup.
+  final backend = await createBackend(
+    dataDir: dirs.dataDir,
+    javaDir: dirs.javaDir,
+    backupsDir: dirs.backupsDir,
+  ).catchError((_) => createBackend());
   final theme = await ThemeState.load();
   final locale = await LocaleState.load();
   runApp(buildApp(
@@ -32,6 +39,7 @@ Future<void> main() async {
     themeState: theme,
     localeState: locale,
     updateState: defaultUpdateState(_packageVersion),
+    dirsState: dirs,
   ));
 }
 

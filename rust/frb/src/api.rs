@@ -196,10 +196,18 @@ fn event_dto(e: &Event) -> EventDto {
 
 // ---------- lifecycle ----------
 
-pub fn init_backend(data_dir: Option<String>) -> Result<(), anyhow::Error> {
+pub fn init_backend(
+    data_dir: Option<String>,
+    runtimes_dir: Option<String>,
+    backups_dir: Option<String>,
+) -> Result<(), anyhow::Error> {
     RT.get_or_init(|| Runtime::new().expect("tokio runtime"));
-    let dir = data_dir.map(PathBuf::from).unwrap_or_else(paths::data_dir);
-    let manager = Manager::new(dir)?;
+    let non_empty = |s: Option<String>| {
+        s.filter(|v| !v.trim().is_empty())
+            .map(|v| PathBuf::from(v.trim()))
+    };
+    let dir = non_empty(data_dir).unwrap_or_else(paths::data_dir);
+    let manager = Manager::with_dirs(dir, non_empty(runtimes_dir), non_empty(backups_dir))?;
     MANAGER
         .set(manager)
         .map_err(|_| anyhow::anyhow!("backend already initialized"))
@@ -207,6 +215,14 @@ pub fn init_backend(data_dir: Option<String>) -> Result<(), anyhow::Error> {
 
 pub fn backend_data_dir() -> String {
     mgr().data_dir.to_string_lossy().to_string()
+}
+
+pub fn backend_runtimes_dir() -> String {
+    mgr().runtimes_dir.to_string_lossy().to_string()
+}
+
+pub fn backend_backups_dir() -> String {
+    mgr().backups_dir.to_string_lossy().to_string()
 }
 
 /// Stream every backend event to Dart.

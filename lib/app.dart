@@ -6,6 +6,7 @@ import 'l10n/app_localizations.dart';
 import 'pages/home_page.dart';
 import 'services/version_checker.dart';
 import 'state/app_state.dart';
+import 'state/dirs_state.dart';
 import 'state/locale_state.dart';
 import 'state/theme_state.dart';
 import 'state/update_state.dart';
@@ -17,12 +18,14 @@ Widget buildApp({
   required ThemeState themeState,
   required LocaleState localeState,
   required UpdateState updateState,
+  DirsState? dirsState,
 }) {
   return MultiProvider(
     providers: [
       ChangeNotifierProvider.value(value: themeState),
       ChangeNotifierProvider.value(value: localeState),
       ChangeNotifierProvider.value(value: updateState),
+      ChangeNotifierProvider.value(value: dirsState ?? DirsState()),
       ChangeNotifierProvider(create: (_) => AppState(backend)..refresh()),
     ],
     child: const McseApp(),

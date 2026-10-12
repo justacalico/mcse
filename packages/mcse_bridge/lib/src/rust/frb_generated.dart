@@ -69,7 +69,7 @@ class McseBridge
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => -1791022446;
+  int get rustContentHash => 387515787;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -81,7 +81,11 @@ class McseBridge
 }
 
 abstract class McseBridgeApi extends BaseApi {
+  Future<String> crateApiBackendBackupsDir();
+
   Future<String> crateApiBackendDataDir();
+
+  Future<String> crateApiBackendRuntimesDir();
 
   Future<BackupDto> crateApiCreateBackup({required String id});
 
@@ -105,7 +109,8 @@ abstract class McseBridgeApi extends BaseApi {
 
   Future<Map<String, String>> crateApiGetProperties({required String id});
 
-  Future<void> crateApiInitBackend({String? dataDir});
+  Future<void> crateApiInitBackend(
+      {String? dataDir, String? runtimesDir, String? backupsDir});
 
   Future<JavaRuntimeDto> crateApiInstallJava({required int feature});
 
@@ -166,12 +171,35 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
   });
 
   @override
-  Future<String> crateApiBackendDataDir() {
+  Future<String> crateApiBackendBackupsDir() {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 1, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_String,
+        decodeErrorData: null,
+      ),
+      constMeta: kCrateApiBackendBackupsDirConstMeta,
+      argValues: [],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiBackendBackupsDirConstMeta => const TaskConstMeta(
+        debugName: "backend_backups_dir",
+        argNames: [],
+      );
+
+  @override
+  Future<String> crateApiBackendDataDir() {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 2, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_String,
@@ -189,13 +217,36 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
       );
 
   @override
+  Future<String> crateApiBackendRuntimesDir() {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 3, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_String,
+        decodeErrorData: null,
+      ),
+      constMeta: kCrateApiBackendRuntimesDirConstMeta,
+      argValues: [],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiBackendRuntimesDirConstMeta => const TaskConstMeta(
+        debugName: "backend_runtimes_dir",
+        argNames: [],
+      );
+
+  @override
   Future<BackupDto> crateApiCreateBackup({required String id}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(id, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 2, port: port_);
+            funcId: 4, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_backup_dto,
@@ -232,7 +283,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         sse_encode_u_32(maxRamMb, serializer);
         sse_encode_Map_String_String_None(properties, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 3, port: port_);
+            funcId: 5, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_String,
@@ -271,7 +322,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 4, port: port_);
+            funcId: 6, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_Map_String_String_None,
@@ -297,7 +348,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         sse_encode_String(id, serializer);
         sse_encode_String(name, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 5, port: port_);
+            funcId: 7, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -323,7 +374,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         sse_encode_String(id, serializer);
         sse_encode_bool(removeFiles, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 6, port: port_);
+            funcId: 8, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -347,7 +398,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(loader, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 7, port: port_);
+            funcId: 9, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_list_game_version_dto,
@@ -371,7 +422,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(id, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 8, port: port_);
+            funcId: 10, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_Map_String_String_None,
@@ -389,27 +440,30 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
       );
 
   @override
-  Future<void> crateApiInitBackend({String? dataDir}) {
+  Future<void> crateApiInitBackend(
+      {String? dataDir, String? runtimesDir, String? backupsDir}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_opt_String(dataDir, serializer);
+        sse_encode_opt_String(runtimesDir, serializer);
+        sse_encode_opt_String(backupsDir, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 9, port: port_);
+            funcId: 11, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
         decodeErrorData: sse_decode_AnyhowException,
       ),
       constMeta: kCrateApiInitBackendConstMeta,
-      argValues: [dataDir],
+      argValues: [dataDir, runtimesDir, backupsDir],
       apiImpl: this,
     ));
   }
 
   TaskConstMeta get kCrateApiInitBackendConstMeta => const TaskConstMeta(
         debugName: "init_backend",
-        argNames: ["dataDir"],
+        argNames: ["dataDir", "runtimesDir", "backupsDir"],
       );
 
   @override
@@ -419,7 +473,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_u_32(feature, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 10, port: port_);
+            funcId: 12, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_java_runtime_dto,
@@ -442,7 +496,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 11, port: port_);
+            funcId: 13, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_list_java_release_dto,
@@ -465,7 +519,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 12, port: port_);
+            funcId: 14, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_list_java_runtime_dto,
@@ -489,7 +543,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(id, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 13, port: port_);
+            funcId: 15, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -513,7 +567,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(id, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 14, port: port_);
+            funcId: 16, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_list_backup_dto,
@@ -536,7 +590,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 15, port: port_);
+            funcId: 17, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_list_instance_dto,
@@ -559,7 +613,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 16, port: port_);
+            funcId: 18, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_list_loader_dto,
@@ -583,7 +637,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(id, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 17, port: port_);
+            funcId: 19, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_ping_dto,
@@ -607,7 +661,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(id, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 18, port: port_);
+            funcId: 20, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_list_String,
@@ -631,7 +685,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_u_32(feature, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 19, port: port_);
+            funcId: 21, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -655,7 +709,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(gameVersion, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 20, port: port_);
+            funcId: 22, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_u_32,
@@ -679,7 +733,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(id, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 21, port: port_);
+            funcId: 23, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -705,7 +759,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         sse_encode_String(id, serializer);
         sse_encode_String(name, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 22, port: port_);
+            funcId: 24, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -731,7 +785,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         sse_encode_String(id, serializer);
         sse_encode_String(command, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 23, port: port_);
+            funcId: 25, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -756,7 +810,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         sse_encode_String(id, serializer);
         sse_encode_opt_String(path, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 24, port: port_);
+            funcId: 26, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -782,7 +836,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         sse_encode_String(id, serializer);
         sse_encode_Map_String_String_None(changes, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 25, port: port_);
+            funcId: 27, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -806,7 +860,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(id, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 26, port: port_);
+            funcId: 28, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -830,7 +884,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(id, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 27, port: port_);
+            funcId: 29, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -855,7 +909,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_StreamSink_event_dto_Sse(sink, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 28, port: port_);
+            funcId: 30, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -889,7 +943,7 @@ class McseBridgeApiImpl extends McseBridgeApiImplPlatform
         sse_encode_opt_box_autoadd_u_32(maxRamMb, serializer);
         sse_encode_opt_list_String(jvmArgs, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 29, port: port_);
+            funcId: 31, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,

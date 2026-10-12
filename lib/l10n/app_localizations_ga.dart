@@ -68,6 +68,28 @@ class AppLocalizationsGa extends AppLocalizations {
   String get dataDir => 'Eolaire sonraí';
 
   @override
+  String get storageTitle => 'Stóras';
+
+  @override
+  String get javaDir => 'Suíomh suiteála Java';
+
+  @override
+  String get backupsDir => 'Eolaire cúltacaí';
+
+  @override
+  String get dirDialogHint =>
+      'Ní bhogtar comhaid. Úsáidtear an suíomh nua nuair a atosaítear mcse.';
+
+  @override
+  String get browseDir => 'Brabhsáil';
+
+  @override
+  String get useDefaultDir => 'Úsáid réamhshocrú';
+
+  @override
+  String get dirPendingRestart => 'i bhfeidhm tar éis atosú';
+
+  @override
   String get javaTitle => 'Java';
 
   @override

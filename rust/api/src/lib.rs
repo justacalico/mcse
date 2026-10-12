@@ -26,6 +26,7 @@ pub fn router(manager: Arc<Manager>, web_dir: Option<PathBuf>, cors_permissive: 
     let state = AppState { manager };
     let api = Router::new()
         .route("/health", get(health))
+        .route("/config", get(config))
         .route("/loaders", get(loaders))
         .route("/loaders/{kind}/versions", get(versions))
         .route("/instances", get(list_instances).post(create_instance))
@@ -73,6 +74,15 @@ async fn health() -> Json<serde_json::Value> {
         "ok": true,
         "name": "mcse-backend",
         "version": env!("CARGO_PKG_VERSION"),
+    }))
+}
+
+async fn config(State(s): State<AppState>) -> Json<serde_json::Value> {
+    let m = &s.manager;
+    Json(serde_json::json!({
+        "data_dir": m.data_dir,
+        "runtimes_dir": m.runtimes_dir,
+        "backups_dir": m.backups_dir,
     }))
 }
 
@@ -363,4 +373,41 @@ pub async fn serve(
     let listener = tokio::net::TcpListener::bind(addr).await?;
     tracing::info!("mcse-backend listening on {addr}");
     axum::serve(listener, router(manager, web_dir, cors_permissive)).await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::body::Body;
+    use axum::http::Request;
+    use tower::util::ServiceExt;
+
+    #[tokio::test]
+    async fn config_reports_dirs() {
+        let dir = tempfile::tempdir().unwrap();
+        let manager = Manager::with_dirs(
+            dir.path().join("data"),
+            Some(dir.path().join("jdks")),
+            Some(dir.path().join("zips")),
+        )
+        .unwrap();
+        let res = router(manager, None, false)
+            .oneshot(Request::get("/api/config").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::OK);
+        let body = axum::body::to_bytes(res.into_body(), usize::MAX)
+            .await
+            .unwrap();
+        let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        let str_path = |p: &PathBuf| {
+            p.canonicalize()
+                .unwrap_or_else(|_| p.clone())
+                .to_string_lossy()
+                .to_string()
+        };
+        assert_eq!(json["data_dir"], str_path(&dir.path().join("data")));
+        assert_eq!(json["runtimes_dir"], str_path(&dir.path().join("jdks")));
+        assert_eq!(json["backups_dir"], str_path(&dir.path().join("zips")));
+    }
 }

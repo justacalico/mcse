@@ -527,6 +527,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "dunce"
+version = "1.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "92773504d58c093f6de2459af4af33faa518c13451eb8f2b5698ed3d36e7c813"
+
+[[package]]
 name = "env_filter"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1170,6 +1176,7 @@ dependencies = [
  "tempfile",
  "tokio",
  "tokio-tungstenite 0.26.2",
+ "tower",
  "tower-http",
  "tracing",
  "tracing-subscriber",
@@ -1183,6 +1190,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "dirs",
+ "dunce",
  "flate2",
  "futures",
  "md-5",
@@ -1203,7 +1211,7 @@ dependencies = [
 
 [[package]]
 name = "mcse_frb"
-version = "0.1.5"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "flutter_rust_bridge",

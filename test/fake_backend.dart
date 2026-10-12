@@ -31,6 +31,8 @@ class FakeBackend implements Backend {
     JavaReleaseInfo(8, true),
   ];
   String dataDirResult = '/data/mcse';
+  String javaDirResult = '/data/mcse/runtimes';
+  String backupsDirResult = '/data/mcse/backups';
   int requiredJavaResult = 21;
   Object? error;
   final Map<String, Object> callErrors = {};
@@ -133,6 +135,10 @@ class FakeBackend implements Backend {
       _maybe('requiredJava:$gameVersion', requiredJavaResult);
   @override
   Future<String> dataDir() => _maybe('dataDir', dataDirResult);
+  @override
+  Future<String> javaDir() => _maybe('javaDir', javaDirResult);
+  @override
+  Future<String> backupsDir() => _maybe('backupsDir', backupsDirResult);
 }
 
 ServerInstance testServer({

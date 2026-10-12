@@ -72,6 +72,13 @@ void main() {
       expect(l10n.navServers, isNotEmpty);
       expect(l10n.createServerTitle, isNotEmpty);
       expect(l10n.statusRunning, isNotEmpty);
+      expect(l10n.storageTitle, isNotEmpty);
+      expect(l10n.javaDir, isNotEmpty);
+      expect(l10n.backupsDir, isNotEmpty);
+      expect(l10n.dirDialogHint, isNotEmpty);
+      expect(l10n.browseDir, isNotEmpty);
+      expect(l10n.useDefaultDir, isNotEmpty);
+      expect(l10n.dirPendingRestart, isNotEmpty);
     }
   });
 

@@ -1,13 +1,13 @@
 use crate::models::{BackupMeta, Instance};
-use crate::{paths, Error, Result};
+use crate::{Error, Result};
 use chrono::Utc;
 use std::path::{Path, PathBuf};
 
 /// Entries inside an instance dir that are never worth backing up.
 const EXCLUDED: &[&str] = &["logs", "cache", "crash-reports", "tmp", ".jars"];
 
-fn backup_root(root: &Path, instance: &Instance) -> PathBuf {
-    paths::backups_dir(root).join(instance.id.to_string())
+fn backup_root(backups_dir: &Path, instance: &Instance) -> PathBuf {
+    backups_dir.join(instance.id.to_string())
 }
 
 /// Everything in the instance dir minus caches/logs — a modded instance
@@ -25,8 +25,8 @@ fn included(dir: &Path) -> Vec<PathBuf> {
     out
 }
 
-pub async fn create(root: &Path, instance: &Instance) -> Result<BackupMeta> {
-    let root = backup_root(root, instance);
+pub async fn create(backups_dir: &Path, instance: &Instance) -> Result<BackupMeta> {
+    let root = backup_root(backups_dir, instance);
     tokio::fs::create_dir_all(&root).await?;
     let mut name = format!("backup-{}.zip", Utc::now().format("%Y%m%d-%H%M%S"));
     for i in 2.. {
@@ -91,8 +91,8 @@ fn add_dir(
     Ok(())
 }
 
-pub async fn list(root: &Path, instance: &Instance) -> Result<Vec<BackupMeta>> {
-    let root = backup_root(root, instance);
+pub async fn list(backups_dir: &Path, instance: &Instance) -> Result<Vec<BackupMeta>> {
+    let root = backup_root(backups_dir, instance);
     let mut out = vec![];
     let mut rd = match tokio::fs::read_dir(&root).await {
         Ok(rd) => rd,
@@ -118,17 +118,17 @@ pub async fn list(root: &Path, instance: &Instance) -> Result<Vec<BackupMeta>> {
     Ok(out)
 }
 
-pub async fn remove(root: &Path, instance: &Instance, name: &str) -> Result<()> {
-    let path = backup_path(root, instance, name)?;
+pub async fn remove(backups_dir: &Path, instance: &Instance, name: &str) -> Result<()> {
+    let path = backup_path(backups_dir, instance, name)?;
     tokio::fs::remove_file(path).await?;
     Ok(())
 }
 
-fn backup_path(root: &Path, instance: &Instance, name: &str) -> Result<PathBuf> {
+fn backup_path(backups_dir: &Path, instance: &Instance, name: &str) -> Result<PathBuf> {
     if name.contains('/') || name.contains('\\') || name.contains("..") {
         return Err(Error::BackupNotFound(name.into()));
     }
-    let path = backup_root(root, instance).join(name);
+    let path = backup_root(backups_dir, instance).join(name);
     if !path.exists() {
         return Err(Error::BackupNotFound(name.into()));
     }
@@ -137,8 +137,8 @@ fn backup_path(root: &Path, instance: &Instance, name: &str) -> Result<PathBuf> 
 
 /// Extract a backup over the instance dir. Caller must ensure the server
 /// is stopped.
-pub async fn restore(root: &Path, instance: &Instance, name: &str) -> Result<()> {
-    let path = backup_path(root, instance, name)?;
+pub async fn restore(backups_dir: &Path, instance: &Instance, name: &str) -> Result<()> {
+    let path = backup_path(backups_dir, instance, name)?;
     let dir = instance.dir.clone();
     tokio::task::spawn_blocking(move || {
         let file = std::fs::File::open(&path)?;
