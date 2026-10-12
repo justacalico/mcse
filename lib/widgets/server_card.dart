@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../backend/backend.dart';
+import '../l10n/app_localizations.dart';
 import '../pages/server_detail_page.dart';
 import '../state/app_state.dart';
 import 'status_chip.dart';
@@ -14,6 +15,7 @@ class ServerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final app = context.read<AppState>();
+    final l10n = AppLocalizations.of(context);
     return Card(
       child: InkWell(
         onTap: () => Navigator.of(context).push(
@@ -48,13 +50,13 @@ class ServerCard extends StatelessWidget {
                 children: [
                   if (!server.isOnline)
                     IconButton.filled(
-                      tooltip: 'Start',
+                      tooltip: l10n.start,
                       icon: const Icon(Icons.play_arrow),
                       onPressed: () => app.start(server.id),
                     )
                   else
                     IconButton.filled(
-                      tooltip: 'Stop',
+                      tooltip: l10n.stop,
                       icon: const Icon(Icons.stop),
                       onPressed: server.isBusy
                           ? null
@@ -63,7 +65,7 @@ class ServerCard extends StatelessWidget {
                   if (server.isOnline) ...[
                     const SizedBox(width: 8),
                     IconButton.outlined(
-                      tooltip: 'Restart',
+                      tooltip: l10n.restart,
                       icon: const Icon(Icons.restart_alt),
                       onPressed:
                           server.isBusy ? null : () => app.restart(server.id),

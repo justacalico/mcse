@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../backend/backend.dart';
+import '../l10n/app_localizations.dart';
 import '../state/app_state.dart';
 import '../widgets/status_chip.dart';
 
@@ -17,9 +18,11 @@ class ServerDetailPage extends StatelessWidget {
     if (server == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: const Center(child: Text('Server not found')),
+        body: Center(
+            child: Text(AppLocalizations.of(context).serverNotFound)),
       );
     }
+    final l10n = AppLocalizations.of(context);
     return DefaultTabController(
       length: 4,
       child: Scaffold(
@@ -36,37 +39,37 @@ class ServerDetailPage extends StatelessWidget {
           actions: [
             if (!server.isOnline)
               IconButton(
-                tooltip: 'Start',
+                tooltip: l10n.start,
                 icon: const Icon(Icons.play_arrow),
                 onPressed: () => app.start(server.id),
               )
             else
               IconButton(
-                tooltip: 'Stop',
+                tooltip: l10n.stop,
                 icon: const Icon(Icons.stop),
                 onPressed:
                     server.isBusy ? null : () => app.stop(server.id),
               ),
             IconButton(
-              tooltip: 'Kill',
+              tooltip: l10n.kill,
               icon: const Icon(Icons.power_settings_new),
               onPressed:
                   server.isOnline ? () => app.kill(server.id) : null,
             ),
             IconButton(
-              tooltip: 'Delete server',
+              tooltip: l10n.deleteServerTooltip,
               icon: const Icon(Icons.delete_outline),
               onPressed: server.isOnline
                   ? null
                   : () => _confirmDelete(context, app, server),
             ),
           ],
-          bottom: const TabBar(
+          bottom: TabBar(
             tabs: [
-              Tab(text: 'Console'),
-              Tab(text: 'Properties'),
-              Tab(text: 'Backups'),
-              Tab(text: 'Settings'),
+              Tab(text: l10n.tabConsole),
+              Tab(text: l10n.tabProperties),
+              Tab(text: l10n.tabBackups),
+              Tab(text: l10n.navSettings),
             ],
           ),
         ),
@@ -86,27 +89,29 @@ class ServerDetailPage extends StatelessWidget {
       BuildContext context, AppState app, ServerInstance server) {
     showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete server?'),
-        content: Text(
-            'This deletes "${server.name}" and all its files permanently.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              try {
-                await app.delete(server.id);
-                if (context.mounted) Navigator.of(context).pop();
-              } catch (_) {}
-            },
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      builder: (ctx) {
+        final l10n = AppLocalizations.of(ctx);
+        return AlertDialog(
+          title: Text(l10n.deleteServerTitle),
+          content: Text(l10n.deleteServerBody(server.name)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                try {
+                  await app.delete(server.id);
+                  if (context.mounted) Navigator.of(context).pop();
+                } catch (_) {}
+              },
+              child: Text(l10n.delete),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -164,7 +169,9 @@ class _ConsoleTabState extends State<ConsoleTab> {
       children: [
         Expanded(
           child: lines.isEmpty
-              ? const Center(child: Text('No console output yet.'))
+              ? Center(
+                  child:
+                      Text(AppLocalizations.of(context).noConsoleOutput))
               : Container(
                   color: const Color(0xFF101216),
                   width: double.infinity,
@@ -191,9 +198,9 @@ class _ConsoleTabState extends State<ConsoleTab> {
                 child: TextField(
                   controller: _command,
                   style: const TextStyle(fontFamily: 'JetBrainsMono'),
-                  decoration: const InputDecoration(
-                    hintText: 'Enter a server command…',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    hintText: AppLocalizations.of(context).commandHint,
+                    border: const OutlineInputBorder(),
                     isDense: true,
                   ),
                   onSubmitted: (_) => _send(),
@@ -201,7 +208,7 @@ class _ConsoleTabState extends State<ConsoleTab> {
               ),
               const SizedBox(width: 8),
               IconButton.filled(
-                tooltip: 'Send',
+                tooltip: AppLocalizations.of(context).send,
                 icon: const Icon(Icons.send),
                 onPressed: _send,
               ),
@@ -286,13 +293,13 @@ class _PropertiesTabState extends State<PropertiesTab> {
       if (mounted) setState(() => _props = {...?_props, ...changes});
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Properties saved')),
+          SnackBar(content: Text(AppLocalizations.of(context).propertiesSaved)),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Save failed: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context).saveFailed('$e'))),
         );
       }
     } finally {
@@ -303,7 +310,9 @@ class _PropertiesTabState extends State<PropertiesTab> {
   @override
   Widget build(BuildContext context) {
     if (_error != null) {
-      return Center(child: Text('Failed to load properties: $_error'));
+      return Center(
+          child:
+              Text(AppLocalizations.of(context).propsLoadFailed(_error!)));
     }
     if (_props == null) {
       return const Center(child: CircularProgressIndicator());
@@ -337,7 +346,9 @@ class _PropertiesTabState extends State<PropertiesTab> {
           padding: const EdgeInsets.all(8),
           child: FilledButton.icon(
             icon: const Icon(Icons.save),
-            label: Text(_saving ? 'Saving…' : 'Save'),
+            label: Text(_saving
+                ? AppLocalizations.of(context).saving
+                : AppLocalizations.of(context).save),
             onPressed: _saving ? null : _save,
           ),
         ),
@@ -379,7 +390,8 @@ class _BackupsTabState extends State<BackupsTab> {
 
   void _showError(Object e) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Backup failed: $e')),
+      SnackBar(
+          content: Text(AppLocalizations.of(context).backupFailed('$e'))),
     );
   }
 
@@ -410,21 +422,23 @@ class _BackupsTabState extends State<BackupsTab> {
   Future<void> _restore(BackupInfo b) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Restore backup?'),
-        content: Text(
-            'This stops the server and overwrites world data with ${b.name}.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Restore'),
-          ),
-        ],
-      ),
+      builder: (ctx) {
+        final l10n = AppLocalizations.of(ctx);
+        return AlertDialog(
+          title: Text(l10n.restoreTitle),
+          content: Text(l10n.restoreBody(b.name)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.restore),
+            ),
+          ],
+        );
+      },
     );
     if (confirm != true || !mounted) return;
     final backend = context.read<AppState>().backend;
@@ -441,7 +455,9 @@ class _BackupsTabState extends State<BackupsTab> {
   @override
   Widget build(BuildContext context) {
     if (_error != null && _backups == null) {
-      return Center(child: Text('Failed to load backups: $_error'));
+      return Center(
+          child:
+              Text(AppLocalizations.of(context).backupsLoadFailed(_error!)));
     }
     if (_backups == null) {
       return const Center(child: CircularProgressIndicator());
@@ -458,7 +474,9 @@ class _BackupsTabState extends State<BackupsTab> {
                 height: 40,
                 child: FilledButton.icon(
                   icon: const Icon(Icons.backup),
-                  label: Text(_busy ? 'Working…' : 'Create backup'),
+                  label: Text(_busy
+                      ? AppLocalizations.of(context).working
+                      : AppLocalizations.of(context).createBackup),
                   onPressed: _busy ? null : _create,
                 ),
               ),
@@ -467,7 +485,7 @@ class _BackupsTabState extends State<BackupsTab> {
         ),
         Expanded(
           child: _backups!.isEmpty
-              ? const Center(child: Text('No backups yet.'))
+              ? Center(child: Text(AppLocalizations.of(context).noBackups))
               : ListView(
                   children: [
                     for (final b in _backups!)
@@ -475,17 +493,19 @@ class _BackupsTabState extends State<BackupsTab> {
                         leading: const Icon(Icons.archive_outlined),
                         title: Text(b.name),
                         subtitle: Text(
-                            '${(b.sizeBytes / 1048576).toStringAsFixed(1)} MB'),
+                            AppLocalizations.of(context).sizeMb(
+                                (b.sizeBytes / 1048576)
+                                    .toStringAsFixed(1))),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              tooltip: 'Restore',
+                              tooltip: AppLocalizations.of(context).restore,
                               icon: const Icon(Icons.restore),
                               onPressed: _busy ? null : () => _restore(b),
                             ),
                             IconButton(
-                              tooltip: 'Delete',
+                              tooltip: AppLocalizations.of(context).delete,
                               icon: const Icon(Icons.delete_outline),
                               onPressed: _busy ? null : () => _delete(b),
                             ),
@@ -576,14 +596,16 @@ class _ServerSettingsTabState extends State<ServerSettingsTab> {
         await app.refresh();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Settings saved')),
+            SnackBar(
+                content:
+                    Text(AppLocalizations.of(context).settingsSaved)),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Save failed: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context).saveFailed('$e'))),
         );
       }
     } finally {
@@ -598,9 +620,9 @@ class _ServerSettingsTabState extends State<ServerSettingsTab> {
       children: [
         TextField(
           controller: _name,
-          decoration: const InputDecoration(
-            labelText: 'Name',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context).nameLabel,
+            border: const OutlineInputBorder(),
           ),
         ),
         const SizedBox(height: 12),
@@ -610,9 +632,9 @@ class _ServerSettingsTabState extends State<ServerSettingsTab> {
               child: TextField(
                 controller: _minRam,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Min RAM (MB)',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context).minRam,
+                  border: const OutlineInputBorder(),
                 ),
               ),
             ),
@@ -621,9 +643,9 @@ class _ServerSettingsTabState extends State<ServerSettingsTab> {
               child: TextField(
                 controller: _maxRam,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Max RAM (MB)',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context).maxRam,
+                  border: const OutlineInputBorder(),
                 ),
               ),
             ),
@@ -632,22 +654,22 @@ class _ServerSettingsTabState extends State<ServerSettingsTab> {
         const SizedBox(height: 12),
         TextField(
           controller: _jvmArgs,
-          decoration: const InputDecoration(
-            labelText: 'Extra JVM args',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context).jvmArgs,
+            border: const OutlineInputBorder(),
           ),
         ),
         const SizedBox(height: 12),
         DropdownButtonFormField<String?>(
           initialValue: _javaPath,
-          decoration: const InputDecoration(
-            labelText: 'Java runtime',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context).javaRuntime,
+            border: const OutlineInputBorder(),
           ),
           items: [
-            const DropdownMenuItem<String?>(
+            DropdownMenuItem<String?>(
               value: null,
-              child: Text('Auto (best match)'),
+              child: Text(AppLocalizations.of(context).javaAuto),
             ),
             if (_javaPath != null &&
                 (_runtimes ?? const []).every((r) => r.path != _javaPath))
@@ -660,7 +682,9 @@ class _ServerSettingsTabState extends State<ServerSettingsTab> {
               for (final rt in _runtimes!)
                 DropdownMenuItem<String?>(
                   value: rt.path,
-                  child: Text('Java ${rt.major} — ${rt.path}',
+                  child: Text(
+                      AppLocalizations.of(context)
+                          .javaRuntimePath(rt.major, rt.path),
                       overflow: TextOverflow.ellipsis),
                 ),
           ],
@@ -669,7 +693,9 @@ class _ServerSettingsTabState extends State<ServerSettingsTab> {
         const SizedBox(height: 16),
         FilledButton.icon(
           icon: const Icon(Icons.save),
-          label: Text(_saving ? 'Saving…' : 'Save'),
+          label: Text(_saving
+              ? AppLocalizations.of(context).saving
+              : AppLocalizations.of(context).save),
           onPressed: _saving ? null : _save,
         ),
       ],

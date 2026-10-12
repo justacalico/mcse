@@ -86,10 +86,8 @@ void main() {
     await tester.pumpAndSettle();
     final state = tester.element(find.byType(MaterialApp))
         .read<AppState>();
-    await tester.pumpWidget(MaterialApp(
-        home: ChangeNotifierProvider.value(
-            value: state,
-            child: const ServerDetailPage(serverId: 'ghost'))));
+    await tester.pumpWidget(localized(ChangeNotifierProvider.value(
+        value: state, child: const ServerDetailPage(serverId: 'ghost'))));
     await tester.pumpAndSettle();
     expect(find.text('Server not found'), findsOneWidget);
   });

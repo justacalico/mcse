@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mcse/state/theme_state.dart';
 
 import 'fake_backend.dart';
 import 'helpers.dart';
@@ -21,7 +23,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Light'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('System'));
+    await tester.tap(find.descendant(
+        of: find.byType(SegmentedButton<AppTheme>),
+        matching: find.text('System')));
     await tester.pumpAndSettle();
   });
 

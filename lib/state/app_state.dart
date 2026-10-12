@@ -130,10 +130,8 @@ class AppState extends ChangeNotifier {
         notifyListeners();
       case EventKind.error:
         if (e.id != null && creating.containsKey(e.id)) {
-          creating[e.id!] = CreateProgress(
-            failed: true,
-            error: e.message ?? 'unknown error',
-          );
+          creating[e.id!] =
+              CreateProgress(failed: true, error: e.message);
         }
         lastError = e.message;
         notifyListeners();

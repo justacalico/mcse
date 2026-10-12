@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mcse/backend/backend.dart';
 import 'package:mcse/models/app_update.dart';
+import 'package:mcse/state/locale_state.dart';
 
 import 'fake_backend.dart';
 import 'helpers.dart';
@@ -91,6 +92,30 @@ void main() {
     await tester.pumpAndSettle();
     await expectLater(find.byType(MaterialApp),
         matchesGoldenFile('goldens/settings.png'));
+  });
+
+  testWidgets('settings page in russian', (tester) async {
+    final backend = FakeBackend();
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(testApp(backend,
+        localeState: LocaleState(const Locale('ru'))));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await tester.pumpAndSettle();
+    expect(find.text('Настройки'), findsWidgets);
+    await expectLater(find.byType(MaterialApp),
+        matchesGoldenFile('goldens/settings_ru.png'));
+  });
+
+  testWidgets('servers page in irish', (tester) async {
+    final backend = FakeBackend()
+      ..instancesResult = [testServer(status: ServerStatus.running)];
+    await snap(
+        tester,
+        'servers_ga',
+        testApp(backend, localeState: LocaleState(const Locale('ga'))));
   });
 
   testWidgets('java manager page', (tester) async {

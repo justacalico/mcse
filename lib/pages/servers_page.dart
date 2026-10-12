@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../state/app_state.dart';
 import '../widgets/server_card.dart';
 
@@ -12,7 +13,7 @@ class ServersPage extends StatelessWidget {
     final app = context.watch<AppState>();
     final pending = app.creating.entries.toList();
     return Scaffold(
-      appBar: AppBar(title: const Text('Servers')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).navServers)),
       body: RefreshIndicator(
         onRefresh: app.refresh,
         child: CustomScrollView(
@@ -31,15 +32,15 @@ class ServersPage extends StatelessWidget {
                 ),
               ),
             if (app.instances.isEmpty && pending.isEmpty)
-              const SliverFillRemaining(
+              SliverFillRemaining(
                 child: Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.dns_outlined, size: 64),
-                      SizedBox(height: 12),
-                      Text('No servers yet'),
-                      Text('Create one from the Create tab.'),
+                      const Icon(Icons.dns_outlined, size: 64),
+                      const SizedBox(height: 12),
+                      Text(AppLocalizations.of(context).noServersYet),
+                      Text(AppLocalizations.of(context).noServersHint),
                     ],
                   ),
                 ),
@@ -77,6 +78,7 @@ class _CreatingTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final app = context.read<AppState>();
+    final l10n = AppLocalizations.of(context);
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Padding(
@@ -89,20 +91,20 @@ class _CreatingTile extends StatelessWidget {
                 Expanded(
                   child: Text(
                     progress.failed
-                        ? 'Server creation failed'
-                        : 'Creating server…',
+                        ? l10n.createFailed
+                        : l10n.creatingServer,
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                 ),
                 if (progress.failed)
                   TextButton(
                     onPressed: () => app.dismissCreate(id),
-                    child: const Text('Dismiss'),
+                    child: Text(l10n.dismiss),
                   ),
               ],
             ),
             if (progress.failed)
-              Text(progress.error ?? 'unknown error',
+              Text(progress.error ?? l10n.unknownError,
                   style: TextStyle(
                       color: Theme.of(context).colorScheme.error))
             else ...[
@@ -111,7 +113,7 @@ class _CreatingTile extends StatelessWidget {
               Text(
                 progress.installLines.isNotEmpty
                     ? progress.installLines.last
-                    : _downloadLabel(progress),
+                    : _downloadLabel(l10n, progress),
                 style: Theme.of(context).textTheme.bodySmall,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -122,11 +124,12 @@ class _CreatingTile extends StatelessWidget {
     );
   }
 
-  String _downloadLabel(CreateProgress p) {
+  String _downloadLabel(AppLocalizations l10n, CreateProgress p) {
+    final received = (p.received / 1048576).toStringAsFixed(1);
     if (p.total != null && p.total! > 0) {
-      return 'Downloading ${(p.received / 1048576).toStringAsFixed(1)}'
-          ' / ${(p.total! / 1048576).toStringAsFixed(1)} MB';
+      final total = (p.total! / 1048576).toStringAsFixed(1);
+      return l10n.downloadingProgress(received, total);
     }
-    return 'Downloading ${(p.received / 1048576).toStringAsFixed(1)} MB';
+    return l10n.downloadingSimple(received);
   }
 }

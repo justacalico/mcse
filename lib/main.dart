@@ -6,6 +6,7 @@ import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
 import 'backend/frb_backend.dart';
+import 'state/locale_state.dart';
 import 'state/theme_state.dart';
 
 Future<void> main() async {
@@ -25,9 +26,11 @@ Future<void> main() async {
   }
   final backend = await createBackend();
   final theme = await ThemeState.load();
+  final locale = await LocaleState.load();
   runApp(buildApp(
     backend: backend,
     themeState: theme,
+    localeState: locale,
     updateState: defaultUpdateState(_packageVersion),
   ));
 }
