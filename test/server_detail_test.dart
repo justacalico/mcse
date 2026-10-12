@@ -226,7 +226,7 @@ void main() {
       (tester) async {
     final backend = FakeBackend();
     await openDetail(tester, backend);
-    await tester.tap(find.text('Settings'));
+    await tester.tap(find.widgetWithText(Tab, 'Settings'));
     await tester.pumpAndSettle();
 
     expect(find.widgetWithText(TextField, 'Name'), findsOneWidget);
@@ -252,7 +252,7 @@ void main() {
     final backend = FakeBackend()
       ..callErrors['runtimes'] = Exception('no jdk');
     await openDetail(tester, backend);
-    await tester.tap(find.text('Settings'));
+    await tester.tap(find.widgetWithText(Tab, 'Settings'));
     await tester.pumpAndSettle();
     expect(find.text('Auto (best match)'), findsOneWidget);
   });
@@ -282,7 +282,7 @@ void main() {
       (tester) async {
     final backend = FakeBackend();
     await openDetail(tester, backend);
-    await tester.tap(find.text('Settings'));
+    await tester.tap(find.widgetWithText(Tab, 'Settings'));
     await tester.pumpAndSettle();
     backend.instancesResult = [testServer(name: 'Renamed')];
     backend.emit(const BackendEvent(EventKind.created, id: 'srv-2'));
@@ -300,7 +300,7 @@ void main() {
     await openDetail(
         tester, backend,
         server: testServer(javaPath: '/opt/jdk19/bin/java'));
-    await tester.tap(find.text('Settings'));
+    await tester.tap(find.widgetWithText(Tab, 'Settings'));
     await tester.pumpAndSettle();
     expect(find.text('/opt/jdk19/bin/java'), findsOneWidget);
   });
@@ -308,7 +308,7 @@ void main() {
   testWidgets('settings tab save failure shows snackbar', (tester) async {
     final backend = FakeBackend();
     await openDetail(tester, backend);
-    await tester.tap(find.text('Settings'));
+    await tester.tap(find.widgetWithText(Tab, 'Settings'));
     await tester.pumpAndSettle();
     backend.callErrors['update:srv-1'] = Exception('denied');
     await tester.tap(find.widgetWithText(FilledButton, 'Save'));
@@ -333,6 +333,26 @@ void main() {
     await tester.pumpAndSettle();
     expect(backend.calls, contains('delete:srv-1'));
     expect(find.text('No servers yet'), findsOneWidget);
+  });
+
+  testWidgets('detail renders inside the main layout', (tester) async {
+    final backend = FakeBackend();
+    await openDetail(tester, backend);
+    expect(find.byType(NavigationRail), findsOneWidget);
+    expect(find.text('Console'), findsOneWidget);
+
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(find.text('Test Server'), findsOneWidget);
+  });
+
+  testWidgets('reselecting Servers pops the detail page', (tester) async {
+    final backend = FakeBackend();
+    await openDetail(tester, backend);
+    await tester.tap(find.text('Servers'));
+    await tester.pumpAndSettle();
+    expect(find.text('Test Server'), findsOneWidget);
+    expect(find.text('Console'), findsNothing);
   });
 
   testWidgets('status events rerender detail header', (tester) async {
