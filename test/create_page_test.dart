@@ -68,39 +68,15 @@ void main() {
     expect(backend.calls, contains('createInstance'));
   });
 
-  testWidgets('snapshot toggle hides unstable versions', (tester) async {
+  testWidgets('version dropdown lists all versions', (tester) async {
     final backend = FakeBackend();
     await openCreate(tester, backend);
     await pickLoader(tester, 'Vanilla');
 
     await tester.tap(find.byType(DropdownButtonFormField<String>).last);
     await tester.pumpAndSettle();
-    expect(find.text('25w01a'), findsNothing);
-    await tester.tap(find.text('1.21.1').last);
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Releases only'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byType(DropdownButtonFormField<String>).last);
-    await tester.pumpAndSettle();
+    expect(find.text('1.21.1'), findsOneWidget);
     expect(find.text('25w01a'), findsOneWidget);
-  });
-
-  testWidgets('toggling releases clears a selected snapshot', (tester) async {
-    final backend = FakeBackend();
-    await openCreate(tester, backend);
-    await pickLoader(tester, 'Vanilla');
-
-    await tester.tap(find.text('Releases only'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byType(DropdownButtonFormField<String>).last);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('25w01a').last);
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Releases only'));
-    await tester.pumpAndSettle();
-    expect(find.text('Select a game version'), findsOneWidget);
   });
 
   testWidgets('empty name falls back to default', (tester) async {
