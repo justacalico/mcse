@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mcse/app.dart';
+import 'package:mcse/state/locale_state.dart';
 import 'package:mcse/state/theme_state.dart';
 import 'package:mcse/state/update_state.dart';
 
@@ -71,6 +72,7 @@ void main() {
     await tester.pumpWidget(buildApp(
       backend: backend,
       themeState: ThemeState(AppTheme.oled),
+      localeState: LocaleState(),
       updateState: stubUpdateState(),
     ));
     await tester.pumpAndSettle();

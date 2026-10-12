@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../l10n/app_localizations.dart';
 import '../services/version_checker.dart';
 import '../state/update_state.dart';
 
@@ -34,14 +35,15 @@ class _AboutPageState extends State<AboutPage> {
     });
     final result = await context.read<UpdateState>().check();
     if (!mounted) return;
+    final l10n = AppLocalizations.of(context);
     setState(() {
       _checking = false;
       if (result == null) {
-        _feedback = 'Check failed';
+        _feedback = l10n.checkFailed;
       } else if (result.updateAvailable) {
-        _feedback = 'Update available: ${result.latestVersion}';
+        _feedback = l10n.updateAvailable(result.latestVersion);
       } else {
-        _feedback = 'Up to date';
+        _feedback = l10n.upToDate;
       }
     });
     if (result?.releaseUrl.isNotEmpty == true &&
@@ -53,8 +55,9 @@ class _AboutPageState extends State<AboutPage> {
   @override
   Widget build(BuildContext context) {
     final update = context.watch<UpdateState>().update;
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('About')),
+      appBar: AppBar(title: Text(l10n.navAbout)),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
@@ -64,14 +67,14 @@ class _AboutPageState extends State<AboutPage> {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.headlineMedium),
           Text(
-            'Minecraft Java Edition server manager',
+            l10n.aboutTagline,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 24),
           ListTile(
             leading: const Icon(Icons.tag),
-            title: const Text('Version'),
+            title: Text(l10n.version),
             subtitle: Text(_version ?? '…'),
           ),
           ListTile(
@@ -82,16 +85,16 @@ class _AboutPageState extends State<AboutPage> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.system_update_alt),
-            title: const Text('Check for updates'),
+            title: Text(l10n.checkForUpdates),
             subtitle: Text(_feedback ??
                 (update?.updateAvailable == true
-                    ? 'Update available: ${update!.latestVersion}'
-                    : 'Check GitLab releases for a new version')),
+                    ? l10n.updateAvailable(update!.latestVersion)
+                    : l10n.checkReleasesHint)),
             onTap: _checking ? null : _check,
           ),
           ListTile(
             leading: const Icon(Icons.open_in_new),
-            title: const Text('Source code'),
+            title: Text(l10n.sourceCode),
             subtitle: const Text(VersionChecker.repoUrl),
             onTap: () =>
                 launchUrl(Uri.parse(VersionChecker.repoUrl)),

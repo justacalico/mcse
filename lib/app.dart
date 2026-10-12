@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'backend/backend.dart';
+import 'l10n/app_localizations.dart';
 import 'pages/home_page.dart';
 import 'services/version_checker.dart';
 import 'state/app_state.dart';
+import 'state/locale_state.dart';
 import 'state/theme_state.dart';
 import 'state/update_state.dart';
 import 'theme.dart';
@@ -13,11 +15,13 @@ import 'widgets/top_bar.dart';
 Widget buildApp({
   required Backend backend,
   required ThemeState themeState,
+  required LocaleState localeState,
   required UpdateState updateState,
 }) {
   return MultiProvider(
     providers: [
       ChangeNotifierProvider.value(value: themeState),
+      ChangeNotifierProvider.value(value: localeState),
       ChangeNotifierProvider.value(value: updateState),
       ChangeNotifierProvider(create: (_) => AppState(backend)..refresh()),
     ],
@@ -34,9 +38,13 @@ class McseApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = context.watch<ThemeState>();
+    final locale = context.watch<LocaleState>();
     return MaterialApp(
       title: 'mcse',
       debugShowCheckedModeBanner: false,
+      locale: locale.locale,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       theme: lightTheme,
       darkTheme: theme.mode == AppTheme.oled ? oledTheme : darkTheme,
       themeMode: switch (theme.mode) {

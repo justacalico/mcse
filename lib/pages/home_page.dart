@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../state/app_state.dart';
 import 'about_page.dart';
 import 'create_page.dart';
@@ -36,6 +37,7 @@ class _HomePageState extends State<HomePage> {
             .showSnackBar(SnackBar(content: Text(_shownError!)));
       });
     }
+    final l10n = AppLocalizations.of(context);
     final narrow = MediaQuery.sizeOf(context).width < 600;
     final body = IndexedStack(index: _index, children: pages);
     return Scaffold(
@@ -47,26 +49,26 @@ class _HomePageState extends State<HomePage> {
                   selectedIndex: _index,
                   onDestinationSelected: (i) => setState(() => _index = i),
                   labelType: NavigationRailLabelType.all,
-                  destinations: const [
+                  destinations: [
                     NavigationRailDestination(
-                      icon: Icon(Icons.dns_outlined),
-                      selectedIcon: Icon(Icons.dns),
-                      label: Text('Servers'),
+                      icon: const Icon(Icons.dns_outlined),
+                      selectedIcon: const Icon(Icons.dns),
+                      label: Text(l10n.navServers),
                     ),
                     NavigationRailDestination(
-                      icon: Icon(Icons.add_box_outlined),
-                      selectedIcon: Icon(Icons.add_box),
-                      label: Text('Create'),
+                      icon: const Icon(Icons.add_box_outlined),
+                      selectedIcon: const Icon(Icons.add_box),
+                      label: Text(l10n.navCreate),
                     ),
                     NavigationRailDestination(
-                      icon: Icon(Icons.settings_outlined),
-                      selectedIcon: Icon(Icons.settings),
-                      label: Text('Settings'),
+                      icon: const Icon(Icons.settings_outlined),
+                      selectedIcon: const Icon(Icons.settings),
+                      label: Text(l10n.navSettings),
                     ),
                     NavigationRailDestination(
-                      icon: Icon(Icons.info_outline),
-                      selectedIcon: Icon(Icons.info),
-                      label: Text('About'),
+                      icon: const Icon(Icons.info_outline),
+                      selectedIcon: const Icon(Icons.info),
+                      label: Text(l10n.navAbout),
                     ),
                   ],
                 ),
@@ -78,26 +80,26 @@ class _HomePageState extends State<HomePage> {
           ? NavigationBar(
               selectedIndex: _index,
               onDestinationSelected: (i) => setState(() => _index = i),
-              destinations: const [
+              destinations: [
                 NavigationDestination(
-                  icon: Icon(Icons.dns_outlined),
-                  selectedIcon: Icon(Icons.dns),
-                  label: 'Servers',
+                  icon: const Icon(Icons.dns_outlined),
+                  selectedIcon: const Icon(Icons.dns),
+                  label: l10n.navServers,
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.add_box_outlined),
-                  selectedIcon: Icon(Icons.add_box),
-                  label: 'Create',
+                  icon: const Icon(Icons.add_box_outlined),
+                  selectedIcon: const Icon(Icons.add_box),
+                  label: l10n.navCreate,
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.settings_outlined),
-                  selectedIcon: Icon(Icons.settings),
-                  label: 'Settings',
+                  icon: const Icon(Icons.settings_outlined),
+                  selectedIcon: const Icon(Icons.settings),
+                  label: l10n.navSettings,
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.info_outline),
-                  selectedIcon: Icon(Icons.info),
-                  label: 'About',
+                  icon: const Icon(Icons.info_outline),
+                  selectedIcon: const Icon(Icons.info),
+                  label: l10n.navAbout,
                 ),
               ],
             )

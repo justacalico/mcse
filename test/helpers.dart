@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mcse/app.dart';
+import 'package:mcse/l10n/app_localizations.dart';
 import 'package:mcse/models/app_update.dart';
 import 'package:mcse/services/version_checker.dart';
+import 'package:mcse/state/locale_state.dart';
 import 'package:mcse/state/theme_state.dart';
 import 'package:mcse/state/update_state.dart';
 
@@ -30,10 +32,19 @@ UpdateState stubUpdateState({AppUpdate? result, bool fail = false}) =>
       currentVersion: () async => '1.0.0',
     );
 
-Widget testApp(FakeBackend backend, {UpdateState? updateState}) => buildApp(
+Widget testApp(FakeBackend backend,
+        {UpdateState? updateState, LocaleState? localeState}) =>
+    buildApp(
       backend: backend,
       themeState: ThemeState(),
+      localeState: localeState ?? LocaleState(),
       updateState: updateState ?? stubUpdateState(),
+    );
+
+Widget localized(Widget child) => MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: child,
     );
 
 /// Loads the app's real fonts plus MaterialIcons so golden tests render

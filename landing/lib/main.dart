@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'l10n/app_localizations.dart';
+
 const _repo = 'HttpAnimations/mcse';
 const _repoUrl = 'https://gitlab.com/$_repo';
 const _releasesUrl = '$_repoUrl/-/releases';
@@ -34,9 +36,40 @@ class ThemeController extends ChangeNotifier {
   }
 }
 
+class LocaleController extends ChangeNotifier {
+  Locale? locale;
+
+  static Future<LocaleController> load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final c = LocaleController();
+    c.locale = decode(prefs.getString('landing_locale'));
+    return c;
+  }
+
+  static Locale? decode(String? raw) {
+    if (raw == null) return null;
+    for (final l in AppLocalizations.supportedLocales) {
+      if (l.toLanguageTag() == raw) return l;
+    }
+    return null;
+  }
+
+  Future<void> set(Locale? l) async {
+    locale = l;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    if (l == null) {
+      await prefs.remove('landing_locale');
+    } else {
+      await prefs.setString('landing_locale', l.toLanguageTag());
+    }
+  }
+}
+
 class LandingApp extends StatefulWidget {
-  const LandingApp({super.key, this.controller});
+  const LandingApp({super.key, this.controller, this.localeController});
   final ThemeController? controller;
+  final LocaleController? localeController;
 
   @override
   State<LandingApp> createState() => _LandingAppState();
@@ -44,18 +77,30 @@ class LandingApp extends StatefulWidget {
 
 class _LandingAppState extends State<LandingApp> {
   late ThemeController _c;
+  late LocaleController _l;
   late bool _ready;
 
   @override
   void initState() {
     super.initState();
     _c = widget.controller ?? ThemeController();
-    _ready = widget.controller != null;
+    _l = widget.localeController ?? LocaleController();
+    _ready = widget.controller != null && widget.localeController != null;
     if (!_ready) {
-      ThemeController.load().then((c) => setState(() {
-            _c = c;
-            _ready = true;
-          }));
+      Future.wait([
+        if (widget.controller == null) ThemeController.load(),
+        if (widget.localeController == null) LocaleController.load(),
+      ]).then((loaded) {
+        if (!mounted) return;
+        setState(() {
+          var i = 0;
+          if (widget.controller == null) _c = loaded[i++] as ThemeController;
+          if (widget.localeController == null) {
+            _l = loaded[i] as LocaleController;
+          }
+          _ready = true;
+        });
+      });
     }
   }
 
@@ -63,7 +108,7 @@ class _LandingAppState extends State<LandingApp> {
   Widget build(BuildContext context) {
     if (!_ready) return const SizedBox.shrink();
     return ListenableBuilder(
-      listenable: _c,
+      listenable: Listenable.merge([_c, _l]),
       builder: (context, _) {
         final oled = _c.mode == SiteTheme.oled;
         final dark = oled ||
@@ -72,10 +117,14 @@ class _LandingAppState extends State<LandingApp> {
                 MediaQuery.platformBrightnessOf(context) == Brightness.dark);
         final theme = _themeFor(dark: dark, oled: oled);
         return MaterialApp(
-          title: 'mcse — Minecraft server manager',
+          onGenerateTitle: (context) =>
+              AppLocalizations.of(context).appTitle,
           debugShowCheckedModeBanner: false,
+          locale: _l.locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: theme,
-          home: LandingPage(controller: _c),
+          home: LandingPage(controller: _c, localeController: _l),
         );
       },
     );
@@ -106,11 +155,14 @@ class _LandingAppState extends State<LandingApp> {
 }
 
 class LandingPage extends StatelessWidget {
-  const LandingPage({super.key, required this.controller});
+  const LandingPage(
+      {super.key, required this.controller, required this.localeController});
   final ThemeController controller;
+  final LocaleController localeController;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final wide = MediaQuery.sizeOf(context).width > 860;
     return Scaffold(
       appBar: AppBar(
@@ -122,13 +174,37 @@ class LandingPage extends StatelessWidget {
           const Text('mcse'),
         ]),
         actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.language),
+            tooltip: l10n.language,
+            initialValue: switch (
+                localeController.locale?.toLanguageTag()) {
+              'zh' || 'ru' || 'ga' =>
+                localeController.locale!.toLanguageTag(),
+              'en-GB' => 'en-GB',
+              null => 'system',
+              String t when t.startsWith('en') => 'en-GB',
+              _ => 'system',
+            },
+            onSelected: (v) => localeController
+                .set(v == 'system' ? null : LocaleController.decode(v)),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                  value: 'system', child: Text(l10n.languageSystem)),
+              const PopupMenuItem(
+                  value: 'en-GB', child: Text('Traditional English')),
+              const PopupMenuItem(value: 'zh', child: Text('简体中文')),
+              const PopupMenuItem(value: 'ru', child: Text('Русский')),
+              const PopupMenuItem(value: 'ga', child: Text('Gaeilge')),
+            ],
+          ),
           SegmentedButton<SiteTheme>(
             showSelectedIcon: false,
-            segments: const [
-              ButtonSegment(value: SiteTheme.system, icon: Icon(Icons.brightness_auto), tooltip: 'System'),
-              ButtonSegment(value: SiteTheme.light, icon: Icon(Icons.light_mode), tooltip: 'Light'),
-              ButtonSegment(value: SiteTheme.dark, icon: Icon(Icons.dark_mode), tooltip: 'Dark'),
-              ButtonSegment(value: SiteTheme.oled, icon: Icon(Icons.nights_stay), tooltip: 'OLED'),
+            segments: [
+              ButtonSegment(value: SiteTheme.system, icon: const Icon(Icons.brightness_auto), tooltip: l10n.themeSystem),
+              ButtonSegment(value: SiteTheme.light, icon: const Icon(Icons.light_mode), tooltip: l10n.themeLight),
+              ButtonSegment(value: SiteTheme.dark, icon: const Icon(Icons.dark_mode), tooltip: l10n.themeDark),
+              ButtonSegment(value: SiteTheme.oled, icon: const Icon(Icons.nights_stay), tooltip: l10n.themeOled),
             ],
             selected: {controller.mode},
             onSelectionChanged: (s) => controller.set(s.first),
@@ -174,9 +250,7 @@ class _Hero extends StatelessWidget {
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 560),
             child: Text(
-              'A desktop Minecraft Java Edition server manager. '
-              'Vanilla, Paper, Purpur, Fabric, Forge and NeoForge — '
-              'one binary, a built-in Rust backend.',
+              AppLocalizations.of(context).heroTagline,
               style: t.titleMedium,
               textAlign: TextAlign.center,
             ),
@@ -185,12 +259,12 @@ class _Hero extends StatelessWidget {
           Wrap(spacing: 12, runSpacing: 12, children: [
             FilledButton.icon(
               icon: const Icon(Icons.download),
-              label: const Text('Download'),
+              label: Text(AppLocalizations.of(context).download),
               onPressed: () => launchUrl(Uri.parse(_releasesUrl)),
             ),
             OutlinedButton.icon(
               icon: const Icon(Icons.code),
-              label: const Text('Source code'),
+              label: Text(AppLocalizations.of(context).sourceCode),
               onPressed: () => launchUrl(Uri.parse(_repoUrl)),
             ),
           ]),
@@ -203,29 +277,29 @@ class _Hero extends StatelessWidget {
 class _Features extends StatelessWidget {
   const _Features();
 
-  static const _items = [
-    (Icons.dns, 'Every loader', 'Vanilla, Paper, Purpur, Fabric, Forge and NeoForge with automatic downloads.'),
-    (Icons.terminal, 'Live console', 'Send commands and watch the server log in real time.'),
-    (Icons.archive_outlined, 'Backups', 'Create, restore and delete world backups in one click.'),
-    (Icons.coffee, 'Java runtimes', 'Detects installed JDKs and installs Temurin when needed.'),
-    (Icons.tune, 'server.properties', 'Edit every property from the UI — no file hunting.'),
-    (Icons.layers_outlined, 'Single binary', 'The Rust backend is compiled into the desktop app.'),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final items = [
+      (Icons.dns, l10n.featEveryLoader, l10n.featEveryLoaderBody),
+      (Icons.terminal, l10n.featConsole, l10n.featConsoleBody),
+      (Icons.archive_outlined, l10n.featBackups, l10n.featBackupsBody),
+      (Icons.coffee, l10n.featJava, l10n.featJavaBody),
+      (Icons.tune, 'server.properties', l10n.featPropsBody),
+      (Icons.layers_outlined, l10n.featBinary, l10n.featBinaryBody),
+    ];
     final t = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
       child: Column(children: [
-        Text('Everything you need to run a server', style: t.headlineMedium),
+        Text(l10n.featuresTitle, style: t.headlineMedium),
         const SizedBox(height: 24),
         Wrap(
           spacing: 16,
           runSpacing: 16,
           alignment: WrapAlignment.center,
           children: [
-            for (final (icon, title, body) in _items)
+            for (final (icon, title, body) in items)
               SizedBox(
                 width: 300,
                 child: Card(
@@ -254,27 +328,27 @@ class _Features extends StatelessWidget {
 class _Showcase extends StatelessWidget {
   const _Showcase();
 
-  static const _shots = [
-    ('assets/screenshots/servers.png', 'Your servers at a glance'),
-    ('assets/screenshots/create.png', 'One wizard, every loader'),
-    ('assets/screenshots/detail_console.png', 'Console and controls'),
-    ('assets/screenshots/settings.png', 'Java and theme settings'),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final shots = [
+      ('assets/screenshots/servers.png', l10n.shotServers),
+      ('assets/screenshots/create.png', l10n.shotCreate),
+      ('assets/screenshots/detail_console.png', l10n.shotConsole),
+      ('assets/screenshots/settings.png', l10n.shotSettings),
+    ];
     final t = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
       child: Column(children: [
-        Text('Inside the app', style: t.headlineMedium),
+        Text(l10n.showcaseTitle, style: t.headlineMedium),
         const SizedBox(height: 24),
         Wrap(
           spacing: 20,
           runSpacing: 20,
           alignment: WrapAlignment.center,
           children: [
-            for (final (path, caption) in _shots)
+            for (final (path, caption) in shots)
               Column(children: [
                 Card(
                   clipBehavior: Clip.antiAlias,
@@ -297,17 +371,16 @@ class _Architecture extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
       child: Column(children: [
-        Text('Built to outgrow the desktop', style: t.headlineMedium),
+        Text(l10n.archTitle, style: t.headlineMedium),
         const SizedBox(height: 8),
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
           child: Text(
-            'The management logic lives in a standalone Rust backend with a '
-            'REST + WebSocket API. The Flutter desktop app embeds it; a web '
-            'UI can talk to the same API tomorrow.',
+            l10n.archBody,
             style: t.bodyMedium,
             textAlign: TextAlign.center,
           ),
@@ -318,7 +391,17 @@ class _Architecture extends StatelessWidget {
             padding: const EdgeInsets.all(24),
             child: CustomPaint(
               size: const Size(720, 260),
-              painter: _ArchPainter(scheme: scheme, textTheme: t),
+              painter: _ArchPainter(
+                scheme: scheme,
+                textTheme: t,
+                flutterLabel: l10n.archFlutter,
+                platformsLabel: l10n.archPlatforms,
+                rustLabel: l10n.archRust,
+                apiLabel: l10n.archApi,
+                webLabel: l10n.archWeb,
+                webSubLabel: l10n.archWebSub,
+                frbLabel: l10n.archFrb,
+              ),
             ),
           ),
         ),
@@ -328,9 +411,26 @@ class _Architecture extends StatelessWidget {
 }
 
 class _ArchPainter extends CustomPainter {
-  _ArchPainter({required this.scheme, required this.textTheme});
+  _ArchPainter({
+    required this.scheme,
+    required this.textTheme,
+    required this.flutterLabel,
+    required this.platformsLabel,
+    required this.rustLabel,
+    required this.apiLabel,
+    required this.webLabel,
+    required this.webSubLabel,
+    required this.frbLabel,
+  });
   final ColorScheme scheme;
   final TextTheme textTheme;
+  final String flutterLabel;
+  final String platformsLabel;
+  final String rustLabel;
+  final String apiLabel;
+  final String webLabel;
+  final String webSubLabel;
+  final String frbLabel;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -368,10 +468,10 @@ class _ArchPainter extends CustomPainter {
     }
 
     final w = size.width;
-    box(Rect.fromLTWH(0, 40, 200, 80), 'Flutter desktop', 'Linux · Windows · macOS');
-    box(Rect.fromLTWH(w - 200, 40, 200, 80), 'Rust backend', 'REST + WebSocket API');
-    box(Rect.fromLTWH(w / 2 - 110, 180, 220, 70), 'Web UI', 'same API, any browser');
-    arrow(const Offset(200, 80), Offset(w - 200, 80), 'embedded (FRB)');
+    box(Rect.fromLTWH(0, 40, 200, 80), flutterLabel, platformsLabel);
+    box(Rect.fromLTWH(w - 200, 40, 200, 80), rustLabel, apiLabel);
+    box(Rect.fromLTWH(w / 2 - 110, 180, 220, 70), webLabel, webSubLabel);
+    arrow(const Offset(200, 80), Offset(w - 200, 80), frbLabel);
     arrow(Offset(w / 2 + 110, 180), Offset(w - 100, 120), 'HTTP + WS');
   }
 
@@ -384,7 +484,15 @@ class _ArchPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _ArchPainter old) => old.scheme != scheme;
+  bool shouldRepaint(covariant _ArchPainter old) =>
+      old.scheme != scheme ||
+      old.flutterLabel != flutterLabel ||
+      old.platformsLabel != platformsLabel ||
+      old.rustLabel != rustLabel ||
+      old.apiLabel != apiLabel ||
+      old.webLabel != webLabel ||
+      old.webSubLabel != webSubLabel ||
+      old.frbLabel != frbLabel;
 }
 
 class _Downloads extends StatefulWidget {
@@ -413,7 +521,7 @@ class _DownloadsState extends State<_Downloads> {
           _Release(
             tag: r['tag_name'] as String? ?? '',
             name: r['name'] as String? ?? '',
-            date: (r['released_at'] as String? ?? '').substring(0, 10),
+            date: (r['released_at'] as String? ?? '').safeDate(),
             assets: [
               for (final l in (r['assets']?['links'] as List? ?? const []))
                 if (l is Map<String, dynamic>)
@@ -428,14 +536,15 @@ class _DownloadsState extends State<_Downloads> {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
       child: Column(children: [
-        Text('Downloads', style: t.headlineMedium),
+        Text(l10n.downloadsTitle, style: t.headlineMedium),
         const SizedBox(height: 16),
         OutlinedButton.icon(
           icon: const Icon(Icons.open_in_new),
-          label: const Text('All releases on GitLab'),
+          label: Text(l10n.allReleases),
           onPressed: () => launchUrl(Uri.parse(_releasesUrl)),
         ),
         const SizedBox(height: 24),
@@ -450,13 +559,11 @@ class _DownloadsState extends State<_Downloads> {
                     child: Center(child: CircularProgressIndicator()));
               }
               if (snap.hasError) {
-                return Text('Could not load releases — grab them on GitLab.',
-                    style: t.bodyMedium);
+                return Text(l10n.releasesError, style: t.bodyMedium);
               }
               final releases = snap.data ?? const [];
               if (releases.isEmpty) {
-                return Text('No releases yet — the first build is on its way.',
-                    style: t.bodyMedium);
+                return Text(l10n.noReleases, style: t.bodyMedium);
               }
               return Column(children: [
                 for (final r in releases)
@@ -473,9 +580,9 @@ class _DownloadsState extends State<_Downloads> {
                             onTap: () => launchUrl(Uri.parse(a.url)),
                           ),
                         if (r.assets.isEmpty)
-                          const ListTile(
+                          ListTile(
                               dense: true,
-                              title: Text('No downloadable assets')),
+                              title: Text(l10n.noAssets)),
                       ],
                     ),
                   ),
@@ -509,6 +616,7 @@ class _Footer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 40),
       child: Column(children: [
@@ -518,16 +626,19 @@ class _Footer extends StatelessWidget {
               child: const Text('GitLab')),
           TextButton(
               onPressed: () => launchUrl(Uri.parse(_releasesUrl)),
-              child: const Text('Releases')),
+              child: Text(l10n.releases)),
           TextButton(
               onPressed: () => launchUrl(
                   Uri.parse('https://github.com/justacalico/mcse')),
-              child: const Text('GitHub mirror')),
+              child: Text(l10n.githubMirror)),
         ]),
         const SizedBox(height: 8),
-        Text('mcse — AGPL-3.0 · not affiliated with Mojang or Microsoft',
-            style: t.bodySmall),
+        Text(l10n.footerLine, style: t.bodySmall),
       ]),
     );
   }
+}
+
+extension on String {
+  String safeDate() => length >= 10 ? substring(0, 10) : this;
 }

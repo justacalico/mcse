@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../backend/backend.dart';
+import '../l10n/app_localizations.dart';
 import '../state/app_state.dart';
 
 /// Java download manager: every feature release Adoptium offers, install
@@ -64,7 +65,9 @@ class _JavaPageState extends State<JavaPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Java install failed: $e')),
+          SnackBar(
+              content:
+                  Text(AppLocalizations.of(context).javaInstallFailed('$e'))),
         );
       }
     } finally {
@@ -80,7 +83,9 @@ class _JavaPageState extends State<JavaPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Java remove failed: $e')),
+          SnackBar(
+              content:
+                  Text(AppLocalizations.of(context).javaRemoveFailed('$e'))),
         );
       }
     }
@@ -93,12 +98,14 @@ class _JavaPageState extends State<JavaPage> {
       for (final rt in _runtimes ?? const <JavaRuntimeInfo>[])
         if (rt.managed) rt.major,
     };
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Java')),
+      appBar: AppBar(title: Text(l10n.javaTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text('Downloads', style: Theme.of(context).textTheme.titleSmall),
+          Text(l10n.downloads,
+              style: Theme.of(context).textTheme.titleSmall),
           const SizedBox(height: 8),
           if (_releases == null && _releasesError == null)
             const Center(child: CircularProgressIndicator())
@@ -106,11 +113,11 @@ class _JavaPageState extends State<JavaPage> {
             Row(
               children: [
                 Expanded(
-                  child: Text('Could not load releases',
+                  child: Text(l10n.releasesLoadFailed,
                       style: Theme.of(context).textTheme.bodySmall),
                 ),
                 TextButton(
-                    onPressed: _loadReleases, child: const Text('Retry')),
+                    onPressed: _loadReleases, child: Text(l10n.retry)),
               ],
             )
           else
@@ -118,13 +125,13 @@ class _JavaPageState extends State<JavaPage> {
               _releaseTile(
                   rel, downloads[rel.feature], installed.contains(rel.feature)),
           const SizedBox(height: 24),
-          Text('Detected runtimes',
+          Text(l10n.detectedRuntimes,
               style: Theme.of(context).textTheme.titleSmall),
           const SizedBox(height: 8),
           if (_runtimes == null)
             const Center(child: CircularProgressIndicator())
           else if (_runtimes!.isEmpty)
-            const Text('No Java runtimes found.')
+            Text(l10n.noRuntimes)
           else
             for (final rt in _runtimes!) _runtimeTile(rt),
         ],
@@ -144,18 +151,18 @@ class _JavaPageState extends State<JavaPage> {
           children: [
             LinearProgressIndicator(value: progress.fraction),
             const SizedBox(height: 4),
-            Text(_progressLabel(progress),
+            Text(_progressLabel(AppLocalizations.of(context), progress),
                 style: Theme.of(context).textTheme.labelSmall),
           ],
         ),
       );
     } else if (installed) {
-      trailing =
-          Text('Installed', style: Theme.of(context).textTheme.bodySmall);
+      trailing = Text(AppLocalizations.of(context).installed,
+          style: Theme.of(context).textTheme.bodySmall);
     } else {
       trailing = TextButton(
         onPressed: () => _install(rel.feature),
-        child: const Text('Install'),
+        child: Text(AppLocalizations.of(context).install),
       );
     }
     return ListTile(
@@ -163,7 +170,7 @@ class _JavaPageState extends State<JavaPage> {
       contentPadding: EdgeInsets.zero,
       title: Row(
         children: [
-          Text('Java ${rel.feature}'),
+          Text(AppLocalizations.of(context).javaFeature(rel.feature)),
           if (rel.lts)
             Padding(
               padding: const EdgeInsets.only(left: 8),
@@ -180,22 +187,24 @@ class _JavaPageState extends State<JavaPage> {
         dense: true,
         contentPadding: EdgeInsets.zero,
         leading: const Icon(Icons.coffee),
-        title: Text('Java ${rt.major} — ${rt.version}'),
+        title: Text(AppLocalizations.of(context)
+            .javaRuntimeVersion(rt.major, rt.version)),
         subtitle: Text(rt.path, overflow: TextOverflow.ellipsis),
         trailing: rt.managed
             ? IconButton(
                 icon: const Icon(Icons.delete_outline),
-                tooltip: 'Remove',
+                tooltip: AppLocalizations.of(context).remove,
                 onPressed: () => _remove(rt.major),
               )
             : null,
       );
 
-  String _progressLabel(JavaProgress p) {
-    if (p.stage == 'extract') return 'Extracting…';
+  String _progressLabel(AppLocalizations l10n, JavaProgress p) {
+    if (p.stage == 'extract') return l10n.extracting;
     final mb = (p.received / 1048576).toStringAsFixed(0);
     final total = p.total;
-    if (total == null || total == 0) return '$mb MB';
-    return '$mb / ${(total / 1048576).toStringAsFixed(0)} MB';
+    if (total == null || total == 0) return l10n.javaProgressMb(mb);
+    return l10n.javaProgressTotal(
+        mb, (total / 1048576).toStringAsFixed(0));
   }
 }
