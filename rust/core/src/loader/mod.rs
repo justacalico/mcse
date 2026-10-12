@@ -40,8 +40,7 @@ pub fn version_tuple(v: &str) -> Option<(u32, u32, u32)> {
 }
 
 pub fn is_release_version(v: &str) -> bool {
-    version_tuple(v).map(|(a, _, _)| a == 1).unwrap_or(false)
-        && v.chars().all(|c| c.is_ascii_digit() || c == '.')
+    version_tuple(v).is_some()
 }
 
 pub(crate) async fn get_json<T: serde::de::DeserializeOwned>(
@@ -66,6 +65,8 @@ mod tests {
         assert_eq!(version_tuple("1.19"), Some((1, 19, 0)));
         assert_eq!(version_tuple("24w01a"), None);
         assert!(is_release_version("1.21.1"));
+        assert!(is_release_version("26.3"));
         assert!(!is_release_version("24w14potato"));
+        assert!(!is_release_version("1.21.11-rc3"));
     }
 }
